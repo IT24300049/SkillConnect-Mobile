@@ -1,0 +1,371 @@
+/* ============================== */
+/* SkillConnect – Create Booking  */
+/* Target: Capacitor Android      */
+/* ============================== */
+
+.bc-screen {
+    position: relative;
+    height: 100dvh;
+    background: #F9FAFB;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding-top: env(safe-area-inset-top, 0px);
+}
+
+.bc-header {
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: #FFFFFF;
+    padding: max(12px, env(safe-area-inset-top, 12px)) 16px 8px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #F3F4F6;
+}
+
+.bc-btn-icon {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: #000000;
+    font-size: 24px;
+    margin-left: -8px;
+}
+
+.bc-title-global {
+    flex: 1;
+    text-align: center;
+    font-size: 16px;
+    font-weight: 700;
+    color: #000000;
+    margin-right: 40px; /* offset back btn to perfectly center */
+}
+
+.bc-scroll-content {
+    flex: 1;
+    overflow-y: auto;
+    padding-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Worker Summary Card */
+.bc-worker-card {
+    background: rgba(13, 148, 136, 0.05);
+    border: 1px solid rgba(13, 148, 136, 0.2);
+    border-radius: 14px;
+    padding: 16px;
+    margin: 16px 16px 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.bc-wc-avatar {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0F766E, #14B8A6);
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.bc-wc-info {
+    flex: 1;
+    min-width: 0;
+}
+.bc-wc-lbl {
+    font-size: 12px;
+    color: #6B7280;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+}
+.bc-wc-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: #111827;
+    margin-top: 2px;
+}
+.bc-wc-rate {
+    font-size: 13px;
+    color: #0D9488;
+    margin-top: 2px;
+    font-weight: 600;
+}
+.bc-wc-skills {
+    display: flex;
+    gap: 4px;
+    margin-top: 6px;
+}
+.bc-wc-skill {
+    background: rgba(13, 148, 136, 0.1);
+    color: #0D9488;
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+.bc-wc-chevron {
+    color: #9CA3AF;
+    font-size: 20px;
+}
+
+/* Form Sections stacked */
+.bc-form-sections {
+    padding: 0 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.bc-card {
+    background: #FFFFFF;
+    border-radius: 14px;
+    border: 1px solid #E5E7EB;
+    padding: 18px;
+}
+
+.bc-field-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 8px;
+}
+
+/* Date Input */
+.bc-date-input {
+    width: 100%;
+    height: 52px;
+    border-radius: 10px;
+    border: 1.5px solid #E5E7EB;
+    padding: 0 16px;
+    font-size: 15px;
+    color: #111827;
+    background: #FFFFFF;
+    font-family: inherit;
+    -webkit-appearance: none;
+}
+.bc-date-input:focus {
+    border-color: #000000;
+    outline: none;
+}
+.bc-date-input.error { border-color: #EF4444; }
+.bc-field-error { font-size: 12px; color: #EF4444; margin-top: 6px; }
+
+/* Time slots grid */
+.bc-time-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 12px;
+}
+.bc-time-slot {
+    height: 44px;
+    border-radius: 10px;
+    border: 1.5px solid #E5E7EB;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 500;
+    color: #374151;
+    background: #FFFFFF;
+}
+.bc-time-slot.active {
+    border-color: #0D9488;
+    background: rgba(13, 148, 136, 0.08);
+    color: #0D9488;
+    font-weight: 700;
+}
+
+/* Stepper */
+.bc-stepper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 12px;
+}
+.bc-step-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 22px;
+    border: 1.5px solid #E5E7EB;
+    background: #FFFFFF;
+    color: #111827;
+    font-size: 22px;
+    font-weight: 300;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.bc-step-btn:disabled { color: #D1D5DB; border-color: #F3F4F6; }
+.bc-step-val {
+    flex: 1;
+    text-align: center;
+    font-size: 18px;
+    font-weight: 700;
+    color: #111827;
+}
+
+/* Cost estimate block */
+.bc-cost-block {
+    margin-top: 14px;
+    background: rgba(245, 158, 11, 0.1);
+    border-radius: 10px;
+    padding: 14px 16px;
+}
+.bc-cost-row1 {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2px;
+}
+.bc-cost-lbl { font-size: 13px; color: #6B7280; }
+.bc-cost-amt { font-size: 18px; font-weight: 700; color: #D97706; }
+.bc-cost-row2 {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.bc-cost-calc { font-size: 12px; color: #6B7280; }
+.bc-cost-help { font-size: 11px; color: #9CA3AF; font-style: italic; margin-top: 8px; }
+
+/* Link a Job */
+.bc-job-helper { font-size: 13px; color: #6B7280; margin-bottom: 12px; }
+.bc-job-row {
+    padding: 12px;
+    border-radius: 10px;
+    border: 1.5px solid #E5E7EB;
+    margin-bottom: 8px;
+}
+.bc-job-row:last-child { margin-bottom: 0; }
+.bc-job-row.active {
+    border-color: #0D9488;
+    background: rgba(13, 148, 136, 0.05);
+}
+.bc-job-row.direct {
+    display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; color: #111827;
+}
+.bc-job-title { font-size: 14px; font-weight: 600; color: #111827; margin-bottom: 4px; }
+.bc-job-meta { font-size: 12px; color: #6B7280; }
+.bc-job-budget { font-size: 12px; color: #6B7280; margin-top: 2px; }
+
+.bc-job-empty {
+    background: #F9FAFB;
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+}
+.bc-job-empty-txt { font-size: 13px; color: #6B7280; margin-bottom: 8px; }
+.bc-job-empty-link { font-size: 14px; color: #0D9488; font-weight: 600; }
+
+/* Notes */
+.bc-notes-area {
+    width: 100%;
+    min-height: 100px;
+    max-height: 180px;
+    border-radius: 10px;
+    border: 1.5px solid #E5E7EB;
+    padding: 12px 16px;
+    font-size: 15px;
+    color: #111827;
+    font-family: inherit;
+    resize: none;
+}
+.bc-notes-area:focus { border-color: #000; outline: none; }
+.bc-notes-count {
+    text-align: right;
+    font-size: 12px;
+    color: #9CA3AF;
+    margin-top: 6px;
+}
+
+/* Summary Card */
+.bc-summary-card {
+    border-left: 3px solid #000000;
+}
+.bc-sum-title {
+    font-size: 12px;
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: #6B7280;
+    margin-bottom: 12px;
+}
+.bc-sum-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid #F3F4F6;
+}
+.bc-sum-row:last-child { border-bottom: none; padding-bottom: 0; }
+.bc-sum-icon { font-size: 16px; color: #9CA3AF; flex-shrink: 0; margin-top: 2px; }
+.bc-sum-lbl { font-size: 12px; color: #6B7280; width: 80px; flex-shrink: 0; }
+.bc-sum-val { font-size: 13px; font-weight: 500; flex: 1; color: #111827; }
+.bc-sum-val.missing { color: #D97706; }
+
+/* Sticky Bottom Bar */
+.bc-bottom-bar {
+    flex-shrink: 0;
+    background: #FFFFFF;
+    border-top: 1px solid #E5E7EB;
+    padding: 12px 16px max(12px, env(safe-area-inset-bottom, 12px));
+}
+.bc-bb-preview {
+    font-size: 14px;
+    font-weight: 600;
+    color: #0D9488;
+    text-align: center;
+    margin-bottom: 12px;
+}
+.bc-bb-btn {
+    width: 100%;
+    height: 52px;
+    background: #000000;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.bc-bb-btn:disabled { background: #D1D5DB; color: #9CA3AF; }
+
+/* Discard Sheet */
+.bc-sheet-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5); z-index: 200;
+    opacity: 0; pointer-events: none; transition: opacity 0.2s;
+    display: flex; align-items: flex-end;
+}
+.bc-sheet-overlay.active { opacity: 1; pointer-events: auto; }
+.bc-sheet {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: #FFFFFF;
+    border-radius: 20px 20px 0 0;
+    padding: 24px 20px max(24px, env(safe-area-inset-bottom, 24px));
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1);
+}
+.bc-sheet-overlay.active .bc-sheet { transform: translateY(0); }
+.bc-sh-title { font-size: 18px; font-weight: 800; color: #111827; margin-bottom: 8px; }
+.bc-sh-sub { font-size: 14px; color: #4B5563; margin-bottom: 24px; line-height: 1.5; }
+.bc-sh-btn-discard { width: 100%; height: 48px; border-radius: 12px; font-size: 15px; font-weight: 700; border: none; background: #EF4444; color: #FFFFFF; margin-bottom: 12px; }
+.bc-sh-btn-keep { width: 100%; height: 48px; border-radius: 12px; font-size: 15px; font-weight: 600; border: 1px solid #D1D5DB; background: #FFFFFF; color: #374151; }

@@ -1,0 +1,153 @@
+/* ============================== */
+/* SkillConnect – Write Review    */
+/* Target: Capacitor Android      */
+/* ============================== */
+
+.wr-screen {
+    position: relative;
+    height: 100dvh;
+    background: #F9FAFB;
+    display: flex; flex-direction: column; overflow: hidden;
+    padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* Header */
+.wr-header {
+    flex-shrink: 0; position: sticky; top: 0; z-index: 10;
+    background: #FFFFFF;
+    padding: max(12px, env(safe-area-inset-top, 12px)) 16px 8px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid #E5E7EB;
+}
+.wr-btn-icon { width: 44px; height: 44px; background: transparent; border: none; font-size: 24px; color: #111827; display: flex; align-items: center; justify-content: center; margin-left: -8px; }
+.wr-title-global { font-size: 16px; font-weight: 700; color: #111827; }
+
+/* Error Banner */
+.wr-err-ban { background: #FEE2E2; color: #DC2626; padding: 12px; font-size: 13px; font-weight: 600; text-align: center; border-bottom: 1px solid #FCA5A5; display: none; }
+
+/* Scroll Body */
+.wr-scroll-content { flex: 1; overflow-y: auto; padding-bottom: 20px; }
+
+/* Context Card */
+.wr-ctx { background: rgba(13,148,136,0.05); border: 1px solid rgba(13,148,136,0.2); border-radius: 14px; padding: 16px; margin: 16px 16px 0; }
+.wr-ctx-r1 { display: flex; align-items: center; gap: 12px; }
+.wr-av { width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, #0D9488, #0F766E); color: #FFF; font-size: 16px; font-weight: 700; display:flex; align-items:center; justify-content:center; flex-shrink: 0; }
+.wr-ctx-mid { flex: 1; min-width: 0; }
+.wr-ctx-lbl { font-size: 11px; color: #6B7280; text-transform: uppercase; margin-bottom: 2px; }
+.wr-ctx-name { font-size: 16px; font-weight: 700; color: #111827; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wr-ctx-loc { font-size: 12px; color: #6B7280; margin-top: 2px; }
+.wr-ctx-pill { font-size: 10px; font-weight: 700; color: #16A34A; background: rgba(22,163,74,0.1); padding: 4px 8px; border-radius: 12px; border: 1px solid rgba(22,163,74,0.2); }
+
+.wr-ctx-r2 { margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(13,148,136,0.15); display: flex; gap: 16px; }
+.wr-ctx-i { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #6B7280; }
+.wr-ctx-i i { color: #0D9488; font-size: 14px; }
+.wr-ctx-job { font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
+
+/* Ratings Card */
+.wr-card { background: #FFF; border: 1px solid #E5E7EB; border-radius: 14px; padding: 24px; margin: 16px 16px 12px; }
+.wr-cti { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #6B7280; margin-bottom: 12px; }
+
+.wr-stars { display: flex; justify-content: center; gap: 8px; margin: 16px 0 12px; }
+.wr-s-box { width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.wr-star-ic { width: 36px; height: 36px; fill: none; stroke: #D1D5DB; stroke-width: 2; transition: fill 150ms ease, stroke 150ms ease; }
+.wr-star-ic.active { fill: #F59E0B; stroke: #F59E0B; }
+.wr-star-ic.pop { animation: starPop 300ms cubic-bezier(0.175, 0.885, 0.32, 1); }
+
+@keyframes starPop {
+    0%   { transform: scale(1); }
+    50%  { transform: scale(1.3); }
+    100% { transform: scale(1); }
+}
+
+.wr-r-lbl { text-align: center; font-size: 14px; font-weight: 600; transition: opacity 150ms; }
+.wr-r-sub { text-align: center; font-size: 12px; color: #6B7280; margin-top: 4px; transition: opacity 150ms; }
+
+/* Textarea Card */
+.wr-tc { padding: 18px; margin: 0 16px 12px; }
+.wr-t-prompt { font-size: 13px; color: #6B7280; margin-bottom: 10px; line-height: 1.4;}
+.wr-ta { width: 100%; min-height: 140px; border-radius: 10px; border: 1.5px solid #E5E7EB; padding: 12px 16px; font-size: 15px; font-family: inherit; resize: none; outline: none; box-sizing: border-box; }
+.wr-ta:focus { border-color: #0D9488; }
+.wr-ta.err { border-color: #EF4444; }
+.wr-count { font-size: 12px; text-align: right; margin-top: 6px; }
+.wr-count.muted { color: #9CA3AF; }
+.wr-count.amber { color: #D97706; font-weight: 600; }
+.wr-count.red { color: #EF4444; font-weight: 700; }
+
+.wr-tips-btn { font-size: 13px; color: #0D9488; font-weight: 600; background: transparent; border: none; padding: 0; margin-top: 12px; }
+.wr-tips-box { background: rgba(13,148,136,0.05); border-radius: 10px; padding: 12px; margin-top: 10px; overflow: hidden; transition: max-height 0.3s; max-height: 0; opacity: 0;}
+.wr-tips-box.open { max-height: 200px; opacity: 1; }
+.wr-tip { font-size: 12px; color: #4B5563; line-height: 1.8; margin-bottom: 4px;}
+.wr-tip:last-child { margin-bottom: 0; }
+
+/* Anonymous Toggle Card */
+.wr-ac { padding: 16px; margin: 0 16px 12px; display: flex; align-items: center; justify-content: space-between; }
+.wr-a-l { font-size: 14px; font-weight: 500; color: #111827; }
+.wr-a-s { font-size: 12px; color: #6B7280; margin-top: 2px; }
+.wr-switch { position: relative; width: 44px; height: 24px; background: #D1D5DB; border-radius: 12px; transition: 0.3s; }
+.wr-switch.on { background: #0D9488; }
+.wr-sw-circ { position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; background: #FFF; border-radius: 50%; transition: 0.3s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);}
+.wr-switch.on .wr-sw-circ { transform: translateX(20px); }
+
+/* Guidelines Banner */
+.wr-guide { background: #F3F4F6; border-radius: 12px; padding: 14px; margin: 0 16px 12px; }
+.wr-g-t { font-size: 13px; font-weight: 600; color: #374151; display: flex; align-items: center; gap: 6px; }
+.wr-g-p { font-size: 12px; color: #6B7280; line-height: 1.6; margin-top: 6px; }
+
+/* Sticky Submit Bar */
+.wr-cta {
+    position: sticky; bottom: 0; background: #FFFFFF; border-top: 1px solid #E5E7EB;
+    padding: 12px 16px max(12px, env(safe-area-inset-bottom, 12px));
+    flex-shrink: 0; z-index: 10;
+}
+.wr-prv { text-align: center; margin-bottom: 8px; opacity: 0; transform: translateY(-10px); transition: 200ms; }
+.wr-prv.show { opacity: 1; transform: translateY(0); }
+.wr-prv-s { display: inline-flex; gap: 2px; align-items: center; justify-content: center; margin-right: 6px; }
+.wr-prv-l { font-size: 13px; font-weight: 600; }
+.wr-btn { width: 100%; height: 52px; background: #0D9488; color: #FFF; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; display:flex; align-items:center; justify-content:center; }
+.wr-btn:disabled { opacity: 0.5; }
+.wr-btn-sub { font-size: 12px; color: #6B7280; text-align: center; margin-top: 8px; }
+
+/* Discard Sheet Overlay */
+.wr-bs-bg { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.5); z-index:200; opacity:0; pointer-events:none; transition: opacity 0.2s; display:flex; align-items:flex-end; }
+.wr-bs-bg.active { opacity:1; pointer-events:auto; }
+.wr-bs { position: absolute; bottom:0; left:0; right:0; background: #FFF; border-radius: 20px 20px 0 0; padding: 24px 20px max(24px, env(safe-area-inset-bottom, 24px)); transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1); }
+.wr-bs-bg.active .wr-bs { transform: translateY(0); }
+.wr-bs-t { font-size: 18px; font-weight: 800; color: #111827; margin-bottom: 8px;}
+.wr-bs-s { font-size: 14px; color: #6B7280; margin-bottom: 24px;}
+.wr-bs-b1 { width: 100%; height: 52px; background: #EF4444; color: #FFF; font-weight: 700; border: none; border-radius: 12px; margin-bottom: 12px;}
+.wr-bs-b2 { width: 100%; height: 52px; background: transparent; color: #4B5563; font-weight: 600; border: 1.5px solid #D1D5DB; border-radius: 12px;}
+
+/* Skeletons */
+.wr-sk-ctx { height: 80px; background: #E5E7EB; border-radius: 14px; margin: 16px 16px 0; animation: wrPulse 1.4s infinite; }
+.wr-sk-c1 { height: 120px; background: #FFF; border: 1px solid #E5E7EB; border-radius: 14px; margin: 16px; animation: wrPulse 1.4s infinite; }
+.wr-sk-c2 { height: 200px; background: #FFF; border: 1px solid #E5E7EB; border-radius: 14px; margin: 0 16px 16px; animation: wrPulse 1.4s infinite; }
+@keyframes wrPulse { 0%{opacity:1} 50%{opacity:0.4} 100%{opacity:1} }
+
+/* Already Reviewed State */
+.wr-ar { padding: 40px 24px; text-align: center; }
+.wr-ar-circ { width: 64px; height: 64px; border-radius: 50%; background: rgba(22,163,74,0.1); color: #16A34A; font-size: 32px; display:flex; align-items:center; justify-content:center; margin: 0 auto; }
+.wr-ar-t { font-size: 20px; font-weight: 700; color: #111827; margin-top: 16px; }
+.wr-ar-s { font-size: 14px; color: #6B7280; line-height: 1.6; margin-top: 8px; }
+.wr-ar-c { background: #FFF; border: 1px solid #E5E7EB; border-radius: 14px; padding: 18px; margin-top: 20px; text-align: left;}
+.wr-ar-stars { display: flex; gap: 4px; margin-bottom: 8px; color: #F59E0B; font-size: 14px;}
+.wr-ar-txt { font-size: 14px; color: #374151; line-height: 1.7; }
+.wr-ar-date { font-size: 12px; color: #9CA3AF; text-align: right; margin-top: 8px;}
+.wr-ar-btn { width: 100%; height: 52px; background: transparent; border: 1.5px solid #D1D5DB; border-radius: 12px; font-weight: 600; color: #4B5563; margin-top: 20px; }
+
+/* Success Overlay */
+.wr-succ { position: fixed; inset: 0; background: #FFF; z-index: 100; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 32px 24px; text-align: center; opacity: 0; transition: opacity 0.3s;}
+.wr-succ.show { display: flex; opacity: 1; }
+.wr-su-stars { display: flex; gap: 8px; margin-bottom: 24px; }
+.wr-su-star { width: 44px; height: 44px; fill: #F59E0B; transform: scale(0); opacity: 0; }
+.wr-su-circ { width: 72px; height: 72px; border-radius: 50%; background: #16A34A; color: #FFF; font-size: 36px; display:flex; align-items:center; justify-content:center; margin-bottom: 16px; opacity: 0; transform: translateY(20px);}
+.wr-su-t { font-size: 22px; font-weight: 700; color: #16A34A; margin-bottom: 8px; opacity: 0;}
+.wr-su-s { font-size: 14px; color: #6B7280; line-height: 1.6; opacity: 0;}
+
+.wr-succ.anim .wr-su-star { animation: sPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1) forwards; }
+.wr-succ.anim .wr-su-circ { animation: cUp 0.5s ease 0.8s forwards; }
+.wr-succ.anim .wr-su-t { animation: fIn 0.5s ease 1s forwards; }
+.wr-succ.anim .wr-su-s { animation: fIn 0.5s ease 1.2s forwards; }
+
+@keyframes sPop { 0%{transform:scale(0); opacity:0;} 70%{transform:scale(1.2); opacity:1;} 100%{transform:scale(1); opacity:1;} }
+@keyframes cUp { 0%{transform:translateY(20px); opacity:0;} 100%{transform:translateY(0); opacity:1;} }
+@keyframes fIn { 0%{opacity:0;} 100%{opacity:1;} }

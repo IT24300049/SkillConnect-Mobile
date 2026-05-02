@@ -1,0 +1,149 @@
+/* ============================== */
+/* SkillConnect - My Applications */
+/* Target: Capacitor Android      */
+/* ============================== */
+
+.wap-screen {
+    position: relative; height: 100dvh; background: #F9FAFB;
+    display: flex; flex-direction: column; overflow: hidden;
+    padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* Header */
+.wap-header {
+    flex-shrink: 0; background: #FFF; padding: max(12px, env(safe-area-inset-top, 12px)) 16px 8px;
+    display: flex; align-items: center; justify-content: space-between;
+}
+.wap-btn-icon { width: 44px; height: 44px; background: transparent; border: none; font-size: 24px; color: #111827; display: flex; align-items: center; justify-content: center; margin-left: -8px;}
+.wap-title { font-size: 16px; font-weight: 700; color: #111827; }
+.wap-flt { width: 44px; height: 44px; background: transparent; border: none; font-size: 22px; color: #4B5563; display: flex; align-items: center; justify-content: center; margin-right: -8px; position: relative;}
+.wap-flt.active::after { content: ''; position: absolute; top: 10px; right: 8px; width: 8px; height: 8px; background: #DC2626; border-radius: 50%; border: 2px solid #FFF;}
+
+/* Summary Strip */
+.wap-sum-strip {
+    flex-shrink: 0; display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none;
+    padding: 10px 16px; background: #E5E7EB; -webkit-overflow-scrolling: touch;
+}
+.wap-sum-strip::-webkit-scrollbar { display: none; }
+.wap-pill {
+    background: #FFF; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; color: #4B5563;
+    white-space: nowrap; box-shadow: 0 1px 2px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 6px;
+}
+.wap-pill-num { font-weight: 800; color: #111827; }
+
+/* Status Tabs */
+.wap-tabs {
+    flex-shrink: 0; display: flex; overflow-x: auto; scrollbar-width: none; background: #FFF;
+    border-bottom: 1px solid #E5E7EB; -webkit-overflow-scrolling: touch; padding: 0 8px;
+}
+.wap-tabs::-webkit-scrollbar { display: none; }
+.wap-tab {
+    padding: 14px 16px; font-size: 14px; font-weight: 600; color: #6B7280; background: transparent; border: none;
+    border-bottom: 2px solid transparent; white-space: nowrap; position: relative;
+}
+.wap-tab.active { color: #0D9488; border-bottom-color: #0D9488; }
+.wap-tab-bdg { display: inline-block; background: #F3F4F6; color: #4B5563; font-size: 11px; padding: 2px 6px; border-radius: 10px; margin-left: 6px;}
+.wap-tab.active .wap-tab-bdg { background: rgba(13,148,136,0.1); color: #0D9488; }
+
+/* Scroll Body */
+.wap-scroll { flex: 1; overflow-y: auto; padding: 12px 16px max(80px, env(safe-area-inset-bottom, 80px)); }
+
+/* Earnings Card */
+.wap-ear-c { background: rgba(22,163,74,0.08); border: 1px solid rgba(22,163,74,0.2); border-radius: 14px; padding: 16px; margin-bottom: 12px; }
+.wap-ear-t { font-size: 12px; text-transform: uppercase; color: #065F46; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 12px; }
+.wap-ear-rw { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;}
+.wap-ear-v { font-size: 20px; font-weight: 800; }
+.wap-ear-l { font-size: 12px; color: #065F46; font-weight: 600;}
+.wap-ear-v.gn { color: #16A34A; }
+.wap-ear-v.br { color: #0D9488; }
+.wap-ear-n { font-size: 11px; color: #064E3B; font-style: italic; opacity: 0.8;}
+
+/* Application Card */
+.wap-card { background: #FFF; border: 1px solid #E5E7EB; border-radius: 14px; padding: 16px; margin-bottom: 12px; display: block; width: 100%; text-align: left;}
+.wap-card.gr { border-left: 4px solid #16A34A; }
+.wap-card.rd { border-left: 4px solid #DC2626; opacity: 0.85; }
+
+/* Status badges */
+.wap-r1 { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 8px;}
+.wap-st-bdg { display: flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px;}
+.wap-st-bdg.pen { background: rgba(245,158,11,0.15); color: #D97706; }
+.wap-st-bdg.acc { background: rgba(22,163,74,0.15); color: #16A34A; }
+.wap-st-bdg.rej { background: rgba(220,38,38,0.15); color: #DC2626; }
+
+.wap-jb-ctx { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 6px; background: #F3F4F6; color: #4B5563; }
+.wap-r1-dt { font-size: 11px; color: #6B7280; margin-left: auto; }
+
+.wap-c-tl { font-size: 16px; font-weight: 700; color: #111827; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 6px;}
+
+.wap-r3 { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.wap-cat-cp { border: 1px solid rgba(13,148,136,0.3); color: #0D9488; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 6px; }
+.wap-urg-b { font-size: 11px; font-weight: 700; display:flex; align-items:center; gap:4px; padding: 3px 8px; border-radius: 6px;}
+.wap-urg-b.emer { background: rgba(220,38,38,0.1); color: #DC2626; }
+.wap-urg-b.urgent { background: rgba(245,158,11,0.1); color: #D97706; }
+
+.wap-r4 { font-size: 12px; color: #6B7280; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 6px;}
+.wap-r4 i { font-size: 14px; color: #9CA3AF; }
+.wap-dot { color: #D1D5DB; }
+
+.wap-r5 { font-size: 13px; font-weight: 600; color: #0D9488; display: flex; align-items: center; gap: 6px; margin-bottom: 6px;}
+.wap-r5 i { font-size: 15px;}
+.wap-r5 span { color: #6B7280; font-weight: 500; font-size: 12px; display:flex; align-items:center; gap:4px;}
+
+.wap-r6-a { background: rgba(22,163,74,0.1); border-radius: 8px; padding: 8px 12px; font-size: 13px; color: #16A34A; font-weight: 600; margin: 8px 0;}
+.wap-r6-r { font-size: 12px; color: #DC2626; margin: 6px 0; }
+
+.wap-ft { border-top: 1px solid #F3F4F6; margin-top: 10px; padding-top: 10px; display: flex; align-items: center; justify-content: space-between;}
+.wap-cus-r { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #6B7280; }
+.wap-cus-av { width: 24px; height: 24px; border-radius: 50%; background: linear-gradient(135deg, #FCD34D, #F59E0B); display:flex; align-items:center; justify-content:center; color: #FFF; font-size: 10px; font-weight: 700;}
+.wap-js-c { font-size: 11px; color: #9CA3AF; font-weight: 600;}
+
+.wap-ac-r { border-top: 1px solid #F3F4F6; margin-top: 10px; padding-top: 10px;}
+.wap-btn-ou { width: 100%; height: 40px; background: transparent; border: 1.5px solid #0D9488; color: #0D9488; font-size: 13px; font-weight: 700; border-radius: 8px;}
+
+/* Empty */
+.wap-emp { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 24px; text-align: center;}
+.wap-emp i { font-size: 64px; color: #9CA3AF; margin-bottom: 16px; }
+.wap-emp-t { font-size: 18px; font-weight: 700; color: #111827; margin-bottom: 8px; }
+.wap-emp-s { font-size: 14px; color: #6B7280; line-height: 1.5; margin-bottom: 24px; }
+.wap-em-btn { width: 100%; max-width: 250px; height: 50px; background: #0D9488; color: #FFF; border: none; border-radius: 12px; font-size: 15px; font-weight: 600;}
+.wap-em-lk { font-size: 14px; color: #0D9488; font-weight: 600; background: transparent; border: none; padding: 10px;}
+
+/* Filter Sheet */
+.wfs-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 51; opacity: 0; pointer-events: none; transition: opacity 0.2s;}
+.wfs-bg.active { opacity: 1; pointer-events: auto; }
+.wfs-sheet { position: absolute; bottom: 0; left: 0; right: 0; background: #FFF; border-radius: 20px 20px 0 0; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1); display: flex; flex-direction: column; max-height: 85vh;}
+.wfs-bg.active .wfs-sheet { transform: translateY(0); }
+
+.wfs-h { position: sticky; top: 0; background: #FFF; padding: 20px; border-bottom: 1px solid #F3F4F6; display: flex; align-items: center; justify-content: space-between; z-index: 2;}
+.wfs-t { font-size: 18px; font-weight: 800; color: #111827; }
+.wfs-rst { font-size: 14px; font-weight: 600; color: #6B7280; background: transparent; border: none;}
+
+.wfs-c { padding: 20px; overflow-y: auto; flex: 1;}
+.wfs-lb { font-size: 14px; font-weight: 700; color: #111827; margin-bottom: 12px;}
+
+.wfs-rd-r { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid #F3F4F6; }
+.wfs-rd-l { font-size: 15px; color: #374151; font-weight: 500; }
+.wfs-rd-bx { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #D1D5DB; display: flex; align-items: center; justify-content: center; transition: 0.2s;}
+.wfs-rd-r.active .wfs-rd-bx { border-color: #0D9488; }
+.wfs-rd-r.active .wfs-rd-bx::after { content: ''; width: 10px; height: 10px; border-radius: 50%; background: #0D9488; }
+
+.wfs-cx-r { display: flex; align-items: center; gap: 12px; padding: 12px 0; }
+.wfs-cx-bx { width: 22px; height: 22px; border-radius: 6px; border: 2px solid #D1D5DB; display: flex; align-items: center; justify-content: center; transition: 0.2s; color: transparent;}
+.wfs-cx-r.active .wfs-cx-bx { background: #0D9488; border-color: #0D9488; color: #FFF; }
+
+.wfs-ch-g { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px;}
+.wfs-cp { padding: 8px 14px; border-radius: 20px; border: 1.5px solid #E5E7EB; font-size: 13px; font-weight: 600; color: #4B5563; background: #FFF; transition: 0.2s;}
+.wfs-cp.active { border-color: #0D9488; background: rgba(13,148,136,0.1); color: #0D9488; }
+
+.wfs-f { padding: 16px 20px max(16px, env(safe-area-inset-bottom, 16px)); border-top: 1px solid #F3F4F6; background: #FFF;}
+.wfs-b { width: 100%; height: 50px; background: #0D9488; color: #FFF; border-radius: 12px; font-size: 16px; font-weight: 700; border: none;}
+
+/* Skeleton */
+.wap-sk-strip { background: #E5E7EB; border-radius: 20px; width: 80px; height: 28px; animation: wPulse 1.4s infinite;}
+.wap-sk-c { background: #FFF; border-radius: 14px; border: 1px solid #E5E7EB; padding: 16px; margin-bottom: 12px; animation: wPulse 1.4s infinite;}
+.wap-sk-r1 { display: flex; justify-content: space-between; margin-bottom: 12px;}
+.wap-sk-b1 { width: 100px; height: 20px; background: #E5E7EB; border-radius: 10px;}
+.wap-sk-b2 { width: 60px; height: 16px; background: #E5E7EB; border-radius: 8px;}
+.wap-sk-t { width: 80%; height: 20px; background: #E5E7EB; border-radius: 10px; margin-bottom: 10px;}
+.wap-sk-s { width: 60%; height: 16px; background: #E5E7EB; border-radius: 8px;}
+@keyframes wPulse { 0%{opacity:1} 50%{opacity:0.5} 100%{opacity:1} }

@@ -1,0 +1,134 @@
+/* ================================== */
+/* SkillConnect - User Detail Admin   */
+/* Target: Capacitor Android          */
+/* ================================== */
+
+.uda-screen { position: relative; height: 100dvh; background: #FFF; display: flex; flex-direction: column; overflow: hidden; }
+
+/* Sticky Header */
+.uda-h { flex-shrink: 0; padding: max(12px, env(safe-area-inset-top, 12px)) 16px 12px; display: flex; align-items: center; justify-content: space-between; background: #FFF; z-index: 20; border-bottom: 1px solid #E5E7EB; }
+.uda-bck { width: 40px; height: 40px; border: none; background: transparent; font-size: 24px; color: #111827; display: flex; align-items: center; justify-content: flex-start; }
+.uda-t { flex: 1; text-align: center; font-size: 16px; font-weight: 700; color: #111827; }
+.uda-mn-b { width: 40px; height: 40px; border: none; background: transparent; font-size: 24px; color: #111827; display: flex; align-items: center; justify-content: flex-end; position: relative;}
+
+.uda-mnu { position: absolute; top: 46px; right: 0; background: #FFF; border: 1px solid #E5E7EB; border-radius: 12px; width: 220px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); padding: 8px; z-index: 30; transform-origin: top right; transform: scale(0.9); opacity: 0; pointer-events: none; transition: 0.2s;}
+.uda-mnu.active { transform: scale(1); opacity: 1; pointer-events: auto; }
+.uda-mi { width: 100%; text-align: left; padding: 12px 16px; background: transparent; border: none; font-size: 14px; font-weight: 600; color: #374151; border-radius: 8px; display: flex; align-items: center; gap: 8px;}
+.uda-mi:active { background: #F3F4F6; }
+.uda-mi.rd { color: #DC2626;}
+
+/* Admin Badge Bar */
+.uda-amb { background: #F0FDFA; padding: 8px 16px; display: flex; align-items: center; gap: 8px; flex-shrink: 0;}
+.uda-amb-t { font-size: 13px; font-weight: 600; color: #0D9488;}
+
+/* Scroll Content */
+.uda-scr { flex: 1; overflow-y: auto; display: flex; flex-direction: column; background: #F3F4F6; padding-bottom: max(30px, env(safe-area-inset-bottom, 30px));}
+
+/* Hero (Borrowed logic from public profile with mods) */
+.uda-her { background: #FFF; padding: 24px 16px; border-bottom: 1px solid #E5E7EB;}
+.uda-av-w { position: relative; width: 90px; height: 90px; margin: 0 auto;}
+.uda-av { width: 100%; height: 100%; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; color: #FFF; font-weight: 800;}
+.uda-vb { position: absolute; bottom: 0; right: 0; width: 28px; height: 28px; background: #10B981; border: 3px solid #FFF; border-radius: 50%; color: #FFF; font-size: 16px; display: flex; align-items: center; justify-content: center;}
+
+.uda-av.wk { background: linear-gradient(135deg, #14B8A6, #0D9488);}
+.uda-av.cu { background: linear-gradient(135deg, #F59E0B, #D97706);}
+.uda-av.su { background: linear-gradient(135deg, #3B82F6, #2563EB);}
+
+.uda-nm { font-size: 24px; font-weight: 800; color: #111827; text-align: center; margin-top: 12px;}
+.uda-lc { font-size: 14px; color: #6B7280; text-align: center; margin-top: 6px; display: flex; align-items: center; justify-content: center; gap: 4px;}
+
+/* Account Status Badge */
+.uda-ast { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 700; margin: 12px auto 0; border: 1.5px solid transparent;}
+.uda-ast.grn { background: #F0FDF4; color: #16A34A; border-color: #BBF7D0;}
+.uda-ast.amb { background: #FFFBEB; color: #D97706; border-color: #FDE68A;}
+.uda-ast.red { background: #FEF2F2; color: #DC2626; border-color: #FECACA;}
+.uda-ast-c { text-align: center;} /* wrapper */
+
+/* Rating / Stats */
+.uda-stt-g { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 24px; padding-top: 20px; border-top: 1px solid #E5E7EB;}
+.uda-stt-i { text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center;}
+.uda-stt-n { font-size: 18px; font-weight: 800; color: #111827; display: flex; align-items: center; gap: 4px;}
+.uda-stt-n.rt { color: #D97706;}
+.uda-stt-l { font-size: 12px; color: #6B7280; margin-top: 4px; font-weight: 600; text-transform: uppercase;}
+
+/* Cards */
+.uda-c-w { padding: 16px; display: flex; flex-direction: column; gap: 16px;}
+.uda-c { background: #FFF; border: 1px solid #E5E7EB; border-radius: 16px; padding: 16px;}
+.uda-ct { font-size: 16px; font-weight: 800; color: #111827; margin-bottom: 12px;}
+.uda-cx { font-size: 14px; color: #4B5563; line-height: 1.6;}
+
+/* Skills */
+.uda-cw { display: flex; flex-wrap: wrap; gap: 8px;}
+.uda-cp { font-size: 13px; padding: 6px 12px; background: #F3F4F6; color: #374151; border-radius: 8px; font-weight: 600;}
+
+/* Admin Account Info */
+.uda-ar { display: flex; justify-content: space-between; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid #F3F4F6;}
+.uda-ar:last-child { border-bottom: none; padding-bottom: 0;}
+.uda-arl { font-size: 13px; color: #6B7280; font-weight: 600;}
+.uda-arv { font-size: 14px; color: #111827; font-weight: 600; text-align: right; max-width: 60%; word-break: break-all;}
+.uda-ari { font-family: monospace; font-size: 11px; background: #F3F4F6; padding: 4px 8px; border-radius: 6px; color: #4B5563; display: flex; align-items: center; gap: 6px;}
+
+.uda-rol { font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 800; text-transform: uppercase; display: inline-block;}
+.uda-rol.wk { background: #F0FDFA; color: #0F766E; border: 1px solid #99F6E4;}
+.uda-rol.cu { background: #FFFBEB; color: #D97706; border: 1px solid #FDE68A;}
+.uda-rol.su { background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE;}
+
+.uda-icr { color: #16A34A; display: flex; align-items: center; gap: 4px; font-weight: 700;}
+.uda-icu { color: #D97706; display: flex; align-items: center; gap: 4px; font-weight: 700;}
+.uda-icf { color: #DC2626; display: flex; align-items: center; gap: 4px; font-weight: 700;}
+
+/* Complaints Stub */
+.uda-cb { padding: 16px; background: #F9FAFB; border-radius: 10px; border: 1px solid #E5E7EB; text-align: center;}
+.uda-ci { font-size: 24px; color: #9CA3AF; margin-bottom: 8px;}
+.uda-cbt { font-size: 14px; color: #6B7280; margin-bottom: 16px; line-height: 1.5;}
+.uda-cbtn { height: 44px; padding: 0 20px; background: #0D9488; color: #FFF; font-weight: 700; border: none; border-radius: 8px; font-size: 14px; display: inline-flex; align-items: center;}
+
+/* Admin Actions Links */
+.uda-ax1 { margin-bottom: 16px;}
+.uda-axt { font-size: 14px; font-weight: 800; color: #111827;}
+.uda-axd { font-size: 12px; color: #6B7280; margin-top: 4px; margin-bottom: 12px;}
+.uda-aob { width: 100%; height: 44px; background: transparent; border: 1.5px solid #16A34A; color: #16A34A; border-radius: 8px; font-size: 14px; font-weight: 700;}
+.uda-aok { color: #16A34A; font-weight: 700; display: flex; align-items: center; justify-content: space-between;}
+.uda-are { color: #DC2626; font-size: 13px; border: none; background: transparent; padding: 0;}
+
+.uda-ax2 { padding: 12px; background: #FEF2F2; border-left: 4px solid #DC2626; border-radius: 8px;}
+.uda-axt.r { color: #DC2626;}
+.uda-axd.r { color: #B91C1C;}
+.uda-ara { width: 100%; height: 44px; background: transparent; border: 1.5px solid #DC2626; color: #DC2626; border-radius: 8px; font-size: 14px; font-weight: 700;}
+
+/* Sticky Bottom Bar */
+.uda-bb { flex-shrink: 0; background: #FFF; padding: 12px 16px max(12px, env(safe-area-inset-bottom, 12px)); border-top: 1px solid #E5E7EB; z-index: 20; display: flex; gap: 10px;}
+.uda-bbtn { flex: 1; height: 52px; border-radius: 12px; font-size: 16px; font-weight: 700; border: 2px solid transparent; display: flex; align-items: center; justify-content: center; background: transparent;}
+.uda-bbtn.vf { border-color: #10B981; color: #059669;}
+.uda-bbtn.da { border-color: #DC2626; color: #DC2626;}
+.uda-bbtn.ra { background: #10B981; color: #FFF; border: none;} /* Reactivate */
+
+/* Sheets */
+.uda-sbg { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 50; opacity: 0; pointer-events: none; transition: 0.2s;}
+.uda-sbg.active { opacity: 1; pointer-events: auto;}
+.uda-sht { position: absolute; bottom: 0; left: 0; right: 0; background: #FFF; border-radius: 20px 20px 0 0; padding: 24px; transform: translateY(100%); transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1); display: flex; flex-direction: column;}
+.uda-sbg.active .uda-sht { transform: translateY(0);}
+.uda-dh { width: 40px; height: 4px; background: #D1D5DB; border-radius: 2px; margin: -12px auto 20px; }
+
+.uda-sh-t { font-size: 20px; font-weight: 800; color: #111827; margin-bottom: 8px;}
+.uda-sh-s { font-size: 14px; color: #6B7280; margin-bottom: 20px; line-height: 1.5;}
+
+.uda-wrn { background: #FEF2F2; border-left: 4px solid #DC2626; border-radius: 0 8px 8px 0; padding: 12px; font-size: 13px; color: #991B1B; margin-bottom: 16px; font-weight: 500; line-height: 1.5;}
+
+.uda-lbl { font-size: 14px; font-weight: 700; color: #111827; margin-bottom: 8px;}
+.uda-ta { width: 100%; min-height: 80px; border-radius: 10px; border: 1.5px solid #D1D5DB; padding: 12px; font-size: 15px; font-family: inherit; outline: none; background: #FFF; transition: 0.2s; resize: none; margin-bottom: 24px;}
+.uda-ta:focus { border-color: #DC2626;}
+
+.uda-fb { width: 100%; height: 52px; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; margin-bottom: 12px;}
+.uda-fb.gr { background: #16A34A; color: #FFF;}
+.uda-fb.rd { background: #DC2626; color: #FFF;}
+.uda-fb:disabled { opacity: 0.5;}
+
+.uda-fl { width: 100%; height: 52px; background: transparent; border: 1.5px solid #D1D5DB; color: #4B5563; border-radius: 12px; font-size: 16px; font-weight: 700;}
+
+/* Skeleton */
+.uda-sk-h { height: 340px; background: #FFF; border-bottom: 1px solid #E5E7EB;}
+.uda-sk-w { padding: 16px; display: flex; flex-direction: column; gap: 16px; background: #F3F4F6; flex: 1;}
+.uda-sk-c { background: #FFF; border: 1px solid #E5E7EB; border-radius: 16px; padding: 16px;}
+.pk { background: #E5E7EB; border-radius: 6px; animation: udSkls 1.4s infinite;}
+@keyframes udSkls { 0%{opacity:1} 50%{opacity:0.4} 100%{opacity:1} }

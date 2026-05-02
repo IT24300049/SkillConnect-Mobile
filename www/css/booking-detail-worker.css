@@ -1,0 +1,161 @@
+/* ================================== */
+/* SkillConnect - Booking Detail (W)  */
+/* Target: Capacitor Android          */
+/* ================================== */
+
+.wbd-screen {
+    position: relative; height: 100dvh; background: #F9FAFB;
+    display: flex; flex-direction: column; overflow: hidden;
+    padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* Header & More Menu */
+.wbd-h {
+    flex-shrink: 0; background: #FFF; padding: max(12px, env(safe-area-inset-top, 12px)) 16px 8px;
+    display: flex; align-items: center; justify-content: space-between; position: relative; z-index: 20;
+}
+.wbd-h-btn { width: 44px; height: 44px; background: transparent; border: none; font-size: 24px; color: #111827; display: flex; align-items: center; justify-content: center; margin-left: -8px; }
+.wbd-t { font-size: 16px; font-weight: 700; color: #111827; }
+.wbd-h-r { width: 44px; height: 44px; background: transparent; border: none; font-size: 24px; color: #111827; display: flex; align-items: center; justify-content: center; margin-right: -8px; }
+
+.wbd-m-bg { position: fixed; inset: 0; z-index: 40; pointer-events: none; }
+.wbd-m-bg.active { pointer-events: auto; }
+.wbd-m { position: absolute; top: max(56px, env(safe-area-inset-top, 56px)); right: 16px; background: #FFF; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); width: 220px; border: 1px solid #E5E7EB; transform: scale(0.95); opacity: 0; pointer-events: none; transition: transform 0.2s, opacity 0.2s; transform-origin: top right;}
+.wbd-m-bg.active .wbd-m { transform: scale(1); opacity: 1; pointer-events: auto; }
+.wbd-m-b { display: flex; align-items: center; gap: 12px; width: 100%; padding: 16px; border: none; background: transparent; font-size: 15px; font-weight: 600; color: #374151; font-family: inherit; border-bottom: 1px solid #F3F4F6;}
+.wbd-m-b:last-child { border-bottom: none; }
+.wbd-m-b i { font-size: 18px; color: #6B7280; }
+.wbd-m-b.rd { color: #DC2626; }
+.wbd-m-b.rd i { color: #DC2626; }
+
+/* Scroll Body */
+.wbd-scroll { flex: 1; overflow-y: auto; padding-bottom: max(100px, env(safe-area-inset-bottom, 100px)); }
+
+/* Status Hero */
+.wbd-sh { padding: 32px 24px; text-align: center; color: #FFF; border-bottom-left-radius: 24px; border-bottom-right-radius: 24px;}
+.wbd-sh.req { background: linear-gradient(135deg, #F59E0B, #D97706); }
+.wbd-sh.acc { background: linear-gradient(135deg, #3B82F6, #2563EB); }
+.wbd-sh.inp { background: linear-gradient(135deg, #14B8A6, #0D9488); }
+.wbd-sh.com { background: linear-gradient(135deg, #22C55E, #16A34A); }
+.wbd-sh.can { background: linear-gradient(135deg, #EF4444, #DC2626); }
+.wbd-sh.rej { background: linear-gradient(135deg, #6B7280, #4B5563); }
+
+.wbd-sh-ic { font-size: 48px; margin-bottom: 12px; display: inline-block;}
+.wbd-sh-t { font-size: 22px; font-weight: 800; margin-bottom: 8px; line-height: 1.2;}
+.wbd-sh-s { font-size: 14px; opacity: 0.9; margin-bottom: 16px; line-height: 1.4;}
+.wbd-sh-cx { background: rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 8px;}
+.wbd-sh-cx i { font-size: 16px; }
+.wbd-sh-cx .pls { width: 8px; height: 8px; background: #FFF; border-radius: 50%; animation: wbxPulse 1.4s infinite;}
+@keyframes wbxPulse { 0%{opacity:1} 50%{opacity:0.3} 100%{opacity:1} }
+.wbd-sh-id { font-size: 11px; opacity: 0.7; margin-top: 16px;}
+
+.wbd-sh-wa { background: rgba(0,0,0,0.15); margin: 0 -24px -32px; padding: 12px 24px; font-size: 13px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 24px;}
+
+/* Cards Wrapper */
+.wbd-cw { padding: 16px; display: flex; flex-direction: column; gap: 12px; margin-top: -16px; z-index: 5; position: relative;}
+.wbd-c { background: #FFF; border-radius: 16px; padding: 16px; border: 1px solid #E5E7EB; box-shadow: 0 2px 4px rgba(0,0,0,0.02);}
+.wbd-ct { font-size: 15px; font-weight: 700; color: #111827; margin-bottom: 12px; display:flex; align-items:center; justify-content:space-between;}
+
+/* Card Internals */
+.wbd-rw { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #F3F4F6;}
+.wbd-rw:last-child { border-bottom: none; padding-bottom: 0;}
+.wbd-rl { font-size: 14px; color: #6B7280; font-weight: 500;}
+.wbd-rr { font-size: 14px; font-weight: 600; color: #111827; text-align: right;}
+.wbd-rr.am { color: #D97706; }
+.wbd-rr.gr { color: #16A34A; font-weight: 800; font-size: 15px;}
+
+.wbd-p-b { background: #E0F2FE; color: #0284C7; font-size: 12px; padding: 8px 12px; border-radius: 8px; display: flex; gap: 8px; margin-top: 12px;}
+.wbd-p-b i { font-size: 16px; }
+
+/* Customer Box */
+.wbd-c-b { display: flex; gap: 12px; margin-bottom: 16px;}
+.wbd-c-av { width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, #FCD34D, #F59E0B); display:flex; align-items:center; justify-content:center; font-size: 20px; font-weight: 700; color: #FFF; flex-shrink: 0;}
+.wbd-c-nm { font-size: 16px; font-weight: 700; color: #111827; margin-bottom: 2px;}
+.wbd-c-lx { font-size: 13px; color: #6B7280;}
+.wbd-c-ms { font-size: 12px; color: #9CA3AF; margin-top: 4px;}
+.wbd-c-ac { display: flex; gap: 8px; }
+.wbd-c-ab { flex: 1; height: 44px; background: transparent; border: 1.5px solid #D1D5DB; border-radius: 8px; font-size: 13px; font-weight: 600; color: #374151; display:flex; align-items:center; justify-content:center; gap:6px;}
+
+/* Job Link Box */
+.wbd-jb-bx { display: flex; align-items: center; justify-content: space-between; background: #F9FAFB; padding: 12px; border-radius: 8px; border: 1px solid #E5E7EB; margin-top: 4px;}
+.wbd-jb-l { display: flex; align-items: center; gap: 10px;}
+.wbd-jb-l i { font-size: 20px; color: #9CA3AF; }
+.wbd-jb-t { font-size: 14px; font-weight: 600; color: #111827;}
+.wbd-jb-c { font-size: 12px; color: #6B7280;}
+
+.wbd-nt { font-size: 14px; line-height: 1.6; color: #374151; padding: 12px; background: #F9FAFB; border-radius: 8px;}
+.wbd-nt.emp { font-style: italic; color: #9CA3AF; background: transparent; padding: 0;}
+
+/* Timeline */
+.wbd-tl { position: relative; padding-left: 20px; display: flex; flex-direction: column; gap: 20px; }
+.wbd-tl::before { content: ''; position: absolute; left: 5px; top: 10px; bottom: 10px; width: 2px; background: #E5E7EB; }
+.wbd-ti { position: relative; }
+.wbd-ti-dt { width: 12px; height: 12px; border-radius: 50%; border: 3px solid #FFF; position: absolute; left: -25px; top: 4px; z-index: 2; }
+.wbd-ti.dn .wbd-ti-dt { background: #0D9488; }
+.wbd-ti.ac .wbd-ti-dt { background: #F59E0B; }
+.wbd-ti.pd .wbd-ti-dt { background: #D1D5DB; }
+.wbd-ti-t { font-size: 14px; font-weight: 600; color: #111827;}
+.wbd-ti.pd .wbd-ti-t { color: #9CA3AF;}
+.wbd-ti-s { font-size: 12px; color: #6B7280; margin-top: 2px;}
+
+/* Review */
+.wbd-rv-p { padding: 12px; border: 1px solid #16A34A; background: rgba(22,163,74,0.05); border-radius: 8px;}
+.wbd-rv-t { font-size: 12px; font-weight: 600; color: #16A34A; margin-bottom: 8px; display:flex; gap:6px;}
+.wbd-rv-st { display: flex; gap: 2px; color: #F59E0B; font-size: 14px; margin-bottom: 6px;}
+.wbd-rv-tx { font-size: 13px; color: #374151; font-style: italic; margin-bottom: 8px;}
+.wbd-rv-nm { font-size: 12px; color: #6B7280; text-align: right;}
+
+.wbd-rv-mp { font-size: 13px; color: #9CA3AF; font-style: italic;}
+
+
+/* Action Bar (Sticky Bottom) */
+.wbd-act {
+    position: fixed; bottom: 0; left: 0; right: 0; background: #FFF;
+    border-top: 1px solid #E5E7EB; padding: 16px 16px max(16px, env(safe-area-inset-bottom, 16px));
+    display: flex; gap: 12px; z-index: 30; box-shadow: 0 -4px 10px rgba(0,0,0,0.05);
+}
+.wbd-btn { flex: 1; height: 52px; border-radius: 12px; font-size: 16px; font-weight: 700; display:flex; align-items:center; justify-content:center; gap:8px;}
+.wbd-btn.g { background: #16A34A; color: #FFF; border: none;}
+.wbd-btn.t { background: #0D9488; color: #FFF; border: none;}
+.wbd-btn.ro { background: #FFF; color: #DC2626; border: 1.5px solid #DC2626;}
+
+.wbd-inf { background: #F3F4F6; padding: 12px 16px; border-radius: 8px; font-size: 14px; font-weight: 600; color: #4B5563; text-align: center; width: 100%;}
+.wbd-inf.cg { background: rgba(22,163,74,0.1); color: #16A34A; }
+.wbd-sub-i { font-size: 12px; color: #6B7280; text-align: center; width: 100%; margin-top: 8px; font-weight: 400;}
+
+
+/* Default Sheets (Inherit layout) */
+.wbd-bs-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 51; opacity: 0; pointer-events: none; transition: opacity 0.2s;}
+.wbd-bs-bg.active { opacity: 1; pointer-events: auto; }
+.wbd-bs { position: absolute; bottom: 0; left: 0; right: 0; background: #FFF; border-radius: 20px 20px 0 0; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1); display: flex; flex-direction: column; max-height: 90vh;}
+.wbd-bs-bg.active .wbd-bs { transform: translateY(0); }
+.wbd-dh { width: 40px; height: 4px; background: #D1D5DB; border-radius: 2px; margin: 12px auto 0; }
+.wbd-bs-h { padding: 16px 20px 12px; }
+.wbd-bs-t { font-size: 18px; font-weight: 800; color: #111827; margin-bottom: 2px;}
+.wbd-bs-s { font-size: 13px; color: #6B7280; }
+.wbd-bs-c { padding: 0 20px 20px; overflow-y: auto; flex:1;}
+.wbd-bs-cb { background: #F9FAFB; border-radius: 12px; padding: 14px; margin-top:12px; margin-bottom: 16px; border: 1px solid #F3F4F6;}
+.wbd-bs-ct { font-size: 14px; font-weight: 600; color: #111827; margin-bottom: 4px;}
+.wbd-bs-cd { font-size: 13px; color: #6B7280; }
+.wbd-bs-cn { font-size: 13px; font-style: italic; color: #4B5563; padding-top: 10px; margin-top: 10px; border-top: 1px solid #E5E7EB;}
+.wbd-bs-ern { background: rgba(22,163,74,0.1); border-radius: 12px; padding: 14px; text-align: center; margin-bottom: 16px;}
+.wbd-bs-ea { font-size: 12px; color: #065F46; font-weight: 600;}
+.wbd-bs-ev { font-size: 18px; color: #16A34A; font-weight: 800; margin-top:2px;}
+.wbd-bs-f { padding: 16px 20px max(16px, env(safe-area-inset-bottom, 16px)); border-top: 1px solid #F3F4F6; background: #FFF; display:flex; flex-direction:column; gap:8px;}
+.wbd-bs-b1 { width: 100%; height: 52px; font-size: 16px; font-weight: 700; border-radius: 12px; border: none; color: #FFF; display:flex; align-items:center; justify-content:center; gap:8px;}
+.wbd-bs-b2 { width: 100%; height: 52px; font-size: 16px; font-weight: 700; border-radius: 12px; border: 1.5px solid #D1D5DB; background: transparent; color: #4B5563;}
+
+.wbd-ta-w { margin-bottom: 16px; }
+.wbd-ta-lbl { font-size: 14px; font-weight: 700; color: #111827; margin-bottom: 8px;}
+.wbd-ta { width: 100%; min-height: 80px; border-radius: 10px; border: 1.5px solid #D1D5DB; padding: 12px; font-family: inherit; font-size: 14px; outline: none; resize: none;}
+.wbd-ta-cc { font-size: 12px; color: #9CA3AF; text-align: right; margin-top: 4px;}
+
+.wbd-ic-w { margin-bottom: 16px; }
+.wbd-ic-lbl { font-size: 14px; font-weight: 700; color: #111827; margin-bottom: 4px; }
+.wbd-ic-sb { font-size: 12px; color: #6B7280; margin-bottom: 8px;}
+.wbd-in-bx { width: 100%; height: 52px; border-radius: 10px; border: 1.5px solid #D1D5DB; padding: 0 16px; font-size: 16px; font-family: inherit; font-weight: 600; outline: none; }
+
+/* Skel */
+.wbd-skc { padding: 24px; background: #FFF; border-radius: 16px; margin: 16px; animation: wPx 1.4s infinite;}
+.wbd-sl1 { width: 100%; height: 100px; background: #E5E7EB; border-radius: 12px; margin-bottom: 16px;}
+@keyframes wPx { 0%{opacity:1} 50%{opacity:0.4} 100%{opacity:1} }

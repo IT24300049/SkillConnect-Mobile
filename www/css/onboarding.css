@@ -1,0 +1,382 @@
+/* ======================================= */
+/* SkillConnect – Splash & Onboarding CSS  */
+/* Mobile-first · Capacitor Android Ready  */
+/* ======================================= */
+
+/* ========================= */
+/*  SPLASH SCREEN             */
+/* ========================= */
+.splash-screen {
+    position: fixed;
+    inset: 0;
+    background: #0F172A;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    animation: splashFadeOut 0.5s ease-in-out forwards;
+    animation-play-state: paused;
+}
+
+.splash-screen.exiting {
+    animation-play-state: running;
+}
+
+@keyframes splashFadeOut {
+    from { opacity: 1; transform: scale(1); }
+    to   { opacity: 0; transform: scale(1.04); pointer-events: none; }
+}
+
+/* Logo container with pulse ring */
+.splash-logo-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 32px;
+}
+
+.splash-pulse-ring {
+    position: absolute;
+    width: 110px;
+    height: 110px;
+    border-radius: 28px;
+    background: rgba(249, 168, 38, 0.15);
+    animation: splashPulse 1.8s ease-in-out infinite;
+}
+
+@keyframes splashPulse {
+    0%   { transform: scale(0.92); opacity: 0.7; }
+    50%  { transform: scale(1.12); opacity: 0.25; }
+    100% { transform: scale(0.92); opacity: 0.7; }
+}
+
+.splash-logo-box {
+    width: 88px;
+    height: 88px;
+    border-radius: 22px;
+    background: linear-gradient(135deg, #1E3A5F 0%, #0B2447 100%);
+    border: 2px solid rgba(249,168,38,0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 1;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(249,168,38,0.1);
+}
+
+/* SC Monogram SVG inside the box */
+.splash-logo-box svg {
+    width: 52px;
+    height: 52px;
+}
+
+.splash-app-name {
+    font-family: 'Inter', -apple-system, sans-serif;
+    font-size: 34px;
+    font-weight: 800;
+    color: #F8FAFC;
+    letter-spacing: -1.2px;
+    margin-bottom: 8px;
+}
+
+.splash-app-name span {
+    color: #F9A826;
+}
+
+.splash-tagline {
+    font-family: 'Inter', -apple-system, sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    color: #64748B;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+/* Loading dots at bottom */
+.splash-dots {
+    position: absolute;
+    bottom: calc(40px + env(safe-area-inset-bottom, 0px));
+    display: flex;
+    gap: 8px;
+}
+
+.splash-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #334155;
+    animation: dotBounce 1.4s ease-in-out infinite;
+}
+.splash-dot:nth-child(2) { animation-delay: 0.2s; }
+.splash-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes dotBounce {
+    0%, 80%, 100% { background: #334155; transform: scale(1); }
+    40%            { background: #F9A826; transform: scale(1.3); }
+}
+
+
+/* ========================= */
+/*  ONBOARDING SCREEN         */
+/* ========================= */
+.onboarding-screen {
+    position: fixed;
+    inset: 0;
+    background: #FFFFFF;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    height: 100dvh;
+    height: 100vh; /* fallback */
+    z-index: 9998;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.onboarding-screen.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Skip button */
+.ob-skip-btn {
+    position: absolute;
+    top: max(20px, env(safe-area-inset-top, 20px));
+    right: 20px;
+    z-index: 10;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: #94A3B8;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 12px 8px; /* touch target */
+    min-height: 48px;
+    min-width: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Slides container */
+.ob-slides-container {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+    position: relative;
+}
+
+.ob-slides-track {
+    display: flex;
+    width: 300%;
+    height: 100%;
+    transition: transform 0.32s cubic-bezier(0.35, 0, 0.25, 1);
+    will-change: transform;
+}
+
+/* Single slide */
+.ob-slide {
+    width: calc(100% / 3);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+/* Illustration area — top 55% */
+.ob-illustration {
+    width: 100%;
+    height: 55%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+/* Slide 1 — amber tones */
+.ob-slide-1 .ob-illustration {
+    background: linear-gradient(160deg, #FFFBEB 0%, #FEF3C7 50%, #FDE68A 100%);
+}
+
+/* Slide 2 — teal tones */
+.ob-slide-2 .ob-illustration {
+    background: linear-gradient(160deg, #F0FDFA 0%, #CCFBF1 50%, #99F6E4 100%);
+}
+
+/* Slide 3 — blue tones */
+.ob-slide-3 .ob-illustration {
+    background: linear-gradient(160deg, #EFF6FF 0%, #DBEAFE 50%, #BFDBFE 100%);
+}
+
+/* Decorative circle behind illustration SVG */
+.ob-illustration::before {
+    content: '';
+    position: absolute;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    opacity: 0.35;
+}
+
+.ob-slide-1 .ob-illustration::before { background: #F9A826; }
+.ob-slide-2 .ob-illustration::before { background: #0D9488; }
+.ob-slide-3 .ob-illustration::before { background: #3B82F6; }
+
+.ob-illustration svg {
+    position: relative;
+    z-index: 1;
+    width: 200px;
+    height: 200px;
+    filter: drop-shadow(0 8px 24px rgba(0,0,0,0.12));
+}
+
+/* Text content area */
+.ob-text-area {
+    flex: 1;
+    width: 100%;
+    padding: 28px 28px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.ob-slide-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+}
+
+.ob-slide-1 .ob-slide-label { color: #D97706; }
+.ob-slide-2 .ob-slide-label { color: #0D9488; }
+.ob-slide-3 .ob-slide-label { color: #2563EB; }
+
+.ob-title {
+    font-family: 'Inter', -apple-system, sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    color: #0F172A;
+    line-height: 1.2;
+    letter-spacing: -0.5px;
+    margin-bottom: 12px;
+}
+
+.ob-subtitle {
+    font-family: 'Inter', -apple-system, sans-serif;
+    font-size: 15px;
+    font-weight: 400;
+    color: #64748B;
+    line-height: 1.6;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* ========================= */
+/*  BOTTOM  NAV AREA          */
+/* ========================= */
+.ob-bottom {
+    padding: 20px 24px;
+    padding-bottom: max(20px, env(safe-area-inset-bottom, 20px));
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    flex-shrink: 0;
+    background: #FFFFFF;
+}
+
+/* Dot indicators */
+.ob-dots {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    align-items: center;
+}
+
+.ob-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: 2px solid #CBD5E1;
+    background: transparent;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.ob-dot.active {
+    background: #0F172A;
+    border-color: #0F172A;
+    width: 24px;
+    border-radius: 4px;
+}
+
+/* Primary CTA button */
+.ob-next-btn {
+    width: 100%;
+    min-height: 54px;
+    border-radius: 14px;
+    border: none;
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+    letter-spacing: -0.2px;
+}
+
+.ob-next-btn:active {
+    transform: scale(0.97);
+}
+
+/* Slide 1 & 2 — filled amber */
+.ob-btn-amber {
+    background: linear-gradient(135deg, #F9A826 0%, #F59E0B 100%);
+    color: #0F172A;
+    box-shadow: 0 4px 20px rgba(249,168,38,0.4);
+}
+
+/* Slide 2 — teal */
+.ob-btn-teal {
+    background: linear-gradient(135deg, #14B8A6 0%, #0D9488 100%);
+    color: #FFFFFF;
+    box-shadow: 0 4px 20px rgba(13,148,136,0.35);
+}
+
+/* Slide 3 — navy (Get Started) */
+.ob-btn-navy {
+    background: linear-gradient(135deg, #1E40AF 0%, #0F2D6B 100%);
+    color: #FFFFFF;
+    box-shadow: 0 4px 20px rgba(30,64,175,0.4);
+}
+
+/* Button arrow icon */
+.ob-btn-icon {
+    display: inline-flex;
+    width: 22px;
+    height: 22px;
+}
+
+/* ========================= */
+/*  TRANSITION UTILITY        */
+/* ========================= */
+.ob-hidden {
+    display: none !important;
+}
