@@ -148,7 +148,14 @@ export default function RegisterScreen({ navigation }) {
     try {
       setError("");
       setSubmitting(true);
-      await signUp(form);
+      
+      // Map primarySkill to skills array for the backend
+      const payload = { ...form };
+      if (form.role === 'worker' && form.primarySkill) {
+        payload.skills = [form.primarySkill];
+      }
+      
+      await signUp(payload);
     } catch (e) {
       setError(e.message || "Registration failed. Please try again.");
     } finally {

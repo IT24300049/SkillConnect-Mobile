@@ -31,7 +31,14 @@ const authValidation = {
         body('role')
             .optional({ checkFalsy: true })
             .isIn(['customer', 'worker', 'supplier', 'admin'])
-            .withMessage('Invalid role')
+            .withMessage('Invalid role'),
+        // Workers must provide at least one skill during registration
+        body('skills')
+            .if(body('role').equals('worker'))
+            .notEmpty()
+            .withMessage('At least one skill is required for workers')
+            .isArray({ min: 1 })
+            .withMessage('Skills must be an array with at least one item'),
     ],
 
     // ─── Profile Update Validation ───
@@ -127,8 +134,9 @@ const sanitizeBookingData = (data) => {
 };
 
 const sanitizeProfileData = (data) => {
-    // Fields like 'role' or 'isVerified' are EXCLUDED here so users cannot change them.
-    const allowed = ['firstName', 'lastName', 'phone', 'district', 'city', 'skills', 'bio', 'hourlyRate', 'experience', 'companyName'];
+    // Fields like 'role', 'isVerified', and 'skills' are EXCLUDED here so users cannot change them.
+    // Skills are set at registration and are permanent.
+    const allowed = ['firstName', 'lastName', 'phone', 'district', 'city', 'bio', 'hourlyRate', 'experience', 'companyName'];
     const sanitized = {};
     allowed.forEach(field => {
         if (data[field] !== undefined) sanitized[field] = data[field];

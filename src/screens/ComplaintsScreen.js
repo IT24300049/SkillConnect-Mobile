@@ -41,7 +41,7 @@ const INITIAL_FORM = {
 const CATEGORIES = [
   { id: "service_quality", label: "Quality", icon: "ribbon-outline" },
   { id: "inappropriate_behavior", label: "Behavior", icon: "hand-left-outline" },
-  { id: "fraud", label: "Fraud", icon: "shield-alert-outline" },
+  { id: "fraud", label: "Fraud", icon: "shield-outline" },
   { id: "payment_issue", label: "Payment", icon: "cash-outline" },
   { id: "other", label: "Other", icon: "ellipsis-horizontal-outline" },
 ];

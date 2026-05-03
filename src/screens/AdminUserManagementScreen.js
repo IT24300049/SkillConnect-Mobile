@@ -17,16 +17,18 @@ import { getAllUsersAdmin, toggleUserStatus } from "../services/apiClient";
 
 export default function AdminUserManagementScreen() {
   const { token, user: currentUser } = useAuth();
+  
+  // -- DATA STORAGE (STATE) --
+  const [users, setUsers] = useState([]);          // Stores all users from the database
+  const [loading, setLoading] = useState(true);     // Shows a loading spinner while fetching
+  const [refreshing, setRefreshing] = useState(false); // For "pull-to-refresh" action
+  const [searchQuery, setSearchQuery] = useState(""); // Stores what you type in the search bar
+  const [activeRole, setActiveRole] = useState("All"); // Stores the selected role filter (e.g. Worker)
 
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [activeRole, setActiveRole] = useState("All");
-
+  // -- FETCHING USERS FROM BACKEND --
   const fetchUsers = useCallback(async () => {
     try {
-      const response = await getAllUsersAdmin(token);
+      const response = await getAllUsersAdmin(token); // Calls the API to get all users
       setUsers(response.content || []);
     } catch (error) {
       console.error("Failed to load users", error);
@@ -41,8 +43,9 @@ export default function AdminUserManagementScreen() {
     fetchUsers();
   }, [fetchUsers]);
 
+  // -- ACTION: DISABLE OR ENABLE USER --
   const handleToggleStatus = async (user) => {
-    const newStatus = !user.isActive;
+    const newStatus = !user.isActive; // If active, make it inactive (and vice-versa)
     const action = newStatus ? "enable" : "disable";
 
     Alert.alert(
@@ -55,8 +58,10 @@ export default function AdminUserManagementScreen() {
           style: newStatus ? "default" : "destructive",
           onPress: async () => {
             try {
+              // Send the update to the backend
               await toggleUserStatus(token, user._id, newStatus);
-              // Update local state
+              
+              // Update the UI immediately without reloading the whole list
               setUsers(prev => prev.map(u =>
                 u._id === user._id ? { ...u, isActive: newStatus } : u
               ));
@@ -69,12 +74,17 @@ export default function AdminUserManagementScreen() {
     );
   };
 
+  // -- SEARCH & FILTER LOGIC --
   const filteredUsers = users.filter(u => {
     const name = `${u.firstName} ${u.lastName}`.toLowerCase();
     const email = u.email?.toLowerCase();
     const query = searchQuery.toLowerCase();
+    
+    // Check if the name or email contains the text typed in the search bar
     const matchesSearch = name.includes(query) || email.includes(query);
 
+    // If 'All' is selected, just show search results. 
+    // Otherwise, check if the role also matches.
     if (activeRole === "All") return matchesSearch;
     return matchesSearch && u.role === activeRole.toLowerCase();
   });

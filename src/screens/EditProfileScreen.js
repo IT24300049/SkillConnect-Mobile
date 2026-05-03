@@ -32,6 +32,7 @@ export default function EditProfileScreen({ navigation }) {
     hourlyRate: "",
     experience: "",
     role: "customer",
+    primarySkill: "",
   });
 
   const [showDistrictPicker, setShowDistrictPicker] = useState(false);
@@ -56,6 +57,7 @@ export default function EditProfileScreen({ navigation }) {
         hourlyRate: data.hourlyRate ? String(data.hourlyRate) : "",
         experience: data.experience || "",
         role: data.role,
+        primarySkill: data.skills && data.skills.length > 0 ? data.skills[0] : (data.primarySkill || ""),
       });
     } catch (error) {
       Alert.alert("Error", "Failed to load profile data.");
@@ -222,6 +224,13 @@ export default function EditProfileScreen({ navigation }) {
               numberOfLines={5}
               textAlignVertical="top"
             />
+
+            <Text style={styles.label}>Primary Skill (Permanent)</Text>
+            <View style={[styles.input, styles.disabledInput]}>
+              <Text style={styles.disabledInputText}>{form.primarySkill || "Not Specified"}</Text>
+              <Ionicons name="lock-closed" size={16} color={Colors.textMuted} />
+            </View>
+            <Text style={styles.helperText}>Primary skill cannot be changed after registration.</Text>
 
             <View style={styles.row}>
               <View style={{ flex: 1, marginRight: Spacing.md }}>
@@ -413,5 +422,23 @@ const styles = StyleSheet.create({
   disabledPicker: {
     opacity: 0.5,
     backgroundColor: Colors.border,
+  },
+  disabledInput: {
+    backgroundColor: Colors.backgroundAlt || '#F9FAFB',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    opacity: 0.8,
+  },
+  disabledInputText: {
+    color: Colors.textMuted,
+    fontSize: FontSize.base,
+  },
+  helperText: {
+    fontSize: 10,
+    color: Colors.textMuted,
+    marginTop: -Spacing.md,
+    marginBottom: Spacing.lg,
+    fontStyle: "italic",
   },
 });
