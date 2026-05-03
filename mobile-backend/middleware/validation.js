@@ -8,9 +8,9 @@ const authValidation = {
             .normalizeEmail()
             .withMessage('Valid email is required'),
         body('password')
-            .isLength({ min: 6 })
-            .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
-            .withMessage('Password must be at least 6 characters with uppercase and a number'),
+            .isLength({ min: 8 })
+            .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#^()_+\-=\[\]{};':"\\|,.<>\/?])/)
+            .withMessage('Password must be at least 8 characters with uppercase, lowercase, a number, and a symbol'),
         body('firstName')
             .trim()
             .isLength({ min: 2 })
