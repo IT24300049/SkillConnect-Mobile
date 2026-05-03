@@ -1,7 +1,7 @@
 const express = require('express');
 const Job = require('../models/Job');
 const auth = require('../middleware/auth');
-const { sanitizeJobData } = require('../middleware/validation');
+const { authValidation, validate, sanitizeJobData } = require('../middleware/validation');
 const router = express.Router();
 
 // GET /api/jobs — list all active jobs with pagination
@@ -135,7 +135,7 @@ router.get('/:id', auth, async (req, res) => {
 });
 
 // POST /api/jobs — create a new job
-router.post('/', auth, async (req, res) => {
+router.post('/', auth, authValidation.job, validate, async (req, res) => {
     try {
         const sanitized = sanitizeJobData(req.body);
         const job = new Job({ ...sanitized, customer: req.userId });
@@ -147,7 +147,7 @@ router.post('/', auth, async (req, res) => {
 });
 
 // PUT /api/jobs/:id — update job (only by customer)
-router.put('/:id', auth, async (req, res) => {
+router.put('/:id', auth, authValidation.job, validate, async (req, res) => {
     try {
         const job = await Job.findOne({ _id: req.params.id, customer: req.userId });
         if (!job) return res.status(404).json({ status: 'error', message: 'Job not found or not authorized' });

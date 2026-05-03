@@ -39,6 +39,19 @@ const authValidation = {
         body('password')
             .notEmpty()
             .withMessage('Password is required')
+    ],
+    job: [
+        body('jobTitle').notEmpty().withMessage('Job title is required'),
+        body('category').notEmpty().withMessage('Category is required'),
+        body('jobDescription').notEmpty().withMessage('Description is required'),
+        body('budgetMin').optional().isNumeric().withMessage('Min budget must be a number'),
+        body('budgetMax').optional().isNumeric().withMessage('Max budget must be a number')
+            .custom((value, { req }) => {
+                if (value && req.body.budgetMin && Number(value) <= Number(req.body.budgetMin)) {
+                    throw new Error('Maximum budget must be greater than minimum budget');
+                }
+                return true;
+            }),
     ]
 };
 

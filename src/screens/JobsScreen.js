@@ -166,6 +166,14 @@ export default function JobsScreen({ navigation }) {
       setActionError("Title, Category, and Description are required");
       return;
     }
+
+    const min = Number(form.budgetMin) || 0;
+    const max = Number(form.budgetMax) || 0;
+
+    if (min > 0 && max > 0 && min >= max) {
+      setActionError("Maximum budget must be greater than minimum budget");
+      return;
+    }
     try {
       setActionError("");
       setCreateBusy(true);
