@@ -184,6 +184,15 @@ export async function createBooking(token, payload) {
   return response.data;
 }
 
+export async function updateBooking(token, bookingId, payload) {
+  const response = await request(`/bookings/${bookingId}`, {
+    method: "PATCH",
+    token,
+    body: payload,
+  });
+  return response.data;
+}
+
 export async function getBookingById(token, bookingId) {
   const response = await request(`/bookings/${bookingId}`, { token });
   return response.data;

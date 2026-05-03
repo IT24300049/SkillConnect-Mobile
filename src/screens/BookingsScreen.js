@@ -20,8 +20,10 @@ import {
   getMyBookings,
   getMyJobs,
   getWorkers,
+  updateBooking,
   updateBookingStatus,
 } from "../services/apiClient";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { Colors, FontSize, FontWeight, Radius, Shadow, Spacing } from "../theme";
 
 const STATUS_ACTIONS = {
@@ -75,7 +77,9 @@ export default function BookingsScreen() {
     worker: "", job: "", scheduledDate: tomorrow,
     scheduledTime: "09:00", estimatedDurationHours: "2", notes: "",
   });
+  const [editingId, setEditingId] = useState(null);
   const [createBusy, setCreateBusy] = useState(false);
+  const [errors, setErrors] = useState({});
   const customerMode = user?.role !== "worker";
 
   const loadData = useCallback(async () => {
@@ -109,40 +113,84 @@ export default function BookingsScreen() {
 
   function updateForm(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
+    }
   }
 
   async function submitBooking() {
-    if (!form.worker || !form.scheduledDate || !form.scheduledTime) {
-      setActionError("Worker, date and time are required");
-      return;
-    }
+    const newErrors = {};
+    if (!form.worker) newErrors.worker = "Please select a worker";
+    if (!form.scheduledDate) newErrors.scheduledDate = "Date is required";
+    if (!form.scheduledTime) newErrors.scheduledTime = "Time is required";
+
     // Validate date is not in the past
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     if (form.scheduledDate < today) {
-      setActionError("Cannot schedule a booking in the past.");
+      newErrors.scheduledDate = "Cannot be in the past";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      setActionError("Please fill in all required fields.");
       return;
     }
+
     try {
       setActionError("");
+      setErrors({});
       setCreateBusy(true);
-      await createBooking(token, {
+      const payload = {
         worker: form.worker,
         job: form.job || undefined,
         scheduledDate: form.scheduledDate.toISOString(),
         scheduledTime: form.scheduledTime,
         estimatedDurationHours: Number(form.estimatedDurationHours || 2),
         notes: form.notes,
-      });
+      };
+
+      if (editingId) {
+        await updateBooking(token, editingId, payload);
+      } else {
+        await createBooking(token, payload);
+      }
+
       const tmrw = new Date(); tmrw.setDate(tmrw.getDate() + 1);
       setForm({ worker: "", job: "", scheduledDate: tmrw, scheduledTime: "09:00", estimatedDurationHours: "2", notes: "" });
+      setEditingId(null);
       setShowForm(false);
       await loadData();
     } catch (e) {
-      setActionError(e.message || "Failed to create booking");
+      setActionError(e.message || "Failed to save booking");
     } finally {
       setCreateBusy(false);
     }
+  }
+
+  function onEdit(item) {
+    setForm({
+      worker: item.worker?._id || "",
+      job: item.job?._id || "",
+      scheduledDate: new Date(item.scheduledDate),
+      scheduledTime: item.scheduledTime || "09:00",
+      estimatedDurationHours: String(item.estimatedDurationHours || 2),
+      notes: item.notes || "",
+    });
+    setEditingId(item._id);
+    setShowForm(true);
+    // Scroll to top to see the form (optional but good UX)
+  }
+
+  function cancelEdit() {
+    const tmrw = new Date(); tmrw.setDate(tmrw.getDate() + 1);
+    setForm({ worker: "", job: "", scheduledDate: tmrw, scheduledTime: "09:00", estimatedDurationHours: "2", notes: "" });
+    setEditingId(null);
+    setShowForm(false);
   }
 
   async function onStatusChange(bookingId, nextStatus) {
@@ -215,7 +263,7 @@ export default function BookingsScreen() {
             {customerMode && (
               <Pressable
                 style={({ pressed }) => [styles.toggleFormBtn, pressed && { opacity: 0.8 }]}
-                onPress={() => setShowForm((v) => !v)}
+                onPress={() => (showForm && editingId ? cancelEdit() : setShowForm((v) => !v))}
                 accessibilityLabel={showForm ? "Hide booking form" : "Show booking form"}
                 accessibilityRole="button"
               >
@@ -228,25 +276,31 @@ export default function BookingsScreen() {
             {/* Create Booking Form */}
             {customerMode && showForm && (
               <View style={styles.card}>
-                <Text style={styles.cardTitle}>New Booking</Text>
+                <View style={styles.cardHeader}>
+                  <Ionicons name={editingId ? "create-outline" : "add-circle-outline"} size={24} color={Colors.primary} />
+                  <Text style={styles.cardTitle}>{editingId ? "Edit Booking" : "New Booking"}</Text>
+                </View>
 
                 <Text style={styles.label}>Select Worker</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillScroll}>
-                  {workers.slice(0, 12).map((w) => {
-                    const name = `${w.firstName || ""} ${w.lastName || ""}`.trim();
-                    return (
-                      <Pressable
-                        key={w._id}
-                        style={[styles.pill, form.worker === w._id && styles.pillActive]}
-                        onPress={() => updateForm("worker", w._id)}
-                      >
-                        <Text style={[styles.pillText, form.worker === w._id && styles.pillTextActive]}>
-                          {name || w._id.slice(-6)}
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
-                </ScrollView>
+                <View style={errors.worker && styles.pillErrorContainer}>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillScroll}>
+                    {workers.slice(0, 12).map((w) => {
+                      const name = `${w.firstName || ""} ${w.lastName || ""}`.trim();
+                      return (
+                        <Pressable
+                          key={w._id}
+                          style={[styles.pill, form.worker === w._id && styles.pillActive]}
+                          onPress={() => updateForm("worker", w._id)}
+                        >
+                          <Text style={[styles.pillText, form.worker === w._id && styles.pillTextActive]}>
+                            {name || w._id.slice(-6)}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </ScrollView>
+                </View>
+                {errors.worker && <Text style={styles.fieldErrorText}>{errors.worker}</Text>}
 
                 <Text style={styles.label}>Select Job (optional)</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillScroll}>
@@ -265,7 +319,7 @@ export default function BookingsScreen() {
 
                 <Text style={styles.label}>Scheduled Date</Text>
                 <Pressable
-                  style={[inputStyle("scheduledDate"), { justifyContent: "center" }]}
+                  style={[inputStyle("scheduledDate"), errors.scheduledDate && styles.inputError, { justifyContent: "center" }]}
                   onPress={() => setShowDatePicker(true)}
                 >
                   <Text style={{ color: Colors.textPrimary, fontSize: FontSize.base }}>
@@ -274,6 +328,7 @@ export default function BookingsScreen() {
                       : "Tap to select date"}
                   </Text>
                 </Pressable>
+                {errors.scheduledDate && <Text style={styles.fieldErrorText}>{errors.scheduledDate}</Text>}
                 {/* Date Picker Modal */}
                 <Modal
                   visible={showDatePicker}
@@ -307,7 +362,7 @@ export default function BookingsScreen() {
 
                 <Text style={styles.label}>Scheduled Time (HH:MM)</Text>
                 <TextInput
-                  style={inputStyle("scheduledTime")}
+                  style={[inputStyle("scheduledTime"), errors.scheduledTime && styles.inputError]}
                   placeholder="09:00"
                   placeholderTextColor={Colors.textMuted}
                   value={form.scheduledTime}
@@ -315,6 +370,7 @@ export default function BookingsScreen() {
                   onFocus={() => setFocused("scheduledTime")}
                   onBlur={() => setFocused("")}
                 />
+                {errors.scheduledTime && <Text style={styles.fieldErrorText}>{errors.scheduledTime}</Text>}
 
                 <Text style={styles.label}>Duration (hours)</Text>
                 <TextInput
@@ -355,7 +411,7 @@ export default function BookingsScreen() {
                 >
                   {createBusy
                     ? <ActivityIndicator color="#fff" size="small" />
-                    : <Text style={styles.primaryBtnText}>Confirm Booking</Text>
+                    : <Text style={styles.primaryBtnText}>{editingId ? "Update Booking" : "Confirm Booking"}</Text>
                   }
                 </Pressable>
               </View>
@@ -413,32 +469,50 @@ export default function BookingsScreen() {
               </View>
 
               <View style={styles.actionRow}>
-                {(STATUS_ACTIONS[item.bookingStatus] || []).filter(status => {
-                  // Only workers can accept, reject, start work or complete
-                  const workerOnly = ["accepted", "rejected", "in_progress", "completed"];
-                  if (workerOnly.includes(status)) {
-                    return roleView === "worker";
-                  }
-                  // Both can cancel
-                  return true;
-                }).map((status) => (
-                  <Pressable
-                    key={status}
-                    style={({ pressed }) => [styles.actionBtn, pressed && { opacity: 0.7 }]}
-                    onPress={() => onStatusChange(item._id, status)}
-                    accessibilityLabel={`Mark as ${status}`}
-                    accessibilityRole="button"
-                  >
-                    <Text style={styles.actionBtnText}>{status.replace("_", " ")}</Text>
-                  </Pressable>
-                ))}
+                {(STATUS_ACTIONS[item.bookingStatus] || [])
+                  .filter(status => {
+                    const workerOnly = ["accepted", "rejected", "in_progress", "completed"];
+                    if (workerOnly.includes(status)) return roleView === "worker";
+                    return true;
+                  })
+                  .map((status) => (
+                    <Pressable
+                      key={status}
+                      style={({ pressed }) => [styles.iconBtn, pressed && { opacity: 0.7 }]}
+                      onPress={() => onStatusChange(item._id, status)}
+                    >
+                      <Ionicons 
+                        name={status === 'cancelled' ? 'close-circle-outline' : 'checkmark-circle-outline'} 
+                        size={18} 
+                        color={status === 'cancelled' ? Colors.error : Colors.primary} 
+                      />
+                      <Text style={status === 'cancelled' ? styles.iconBtnTextDanger : styles.iconBtnTextPrimary}>
+                        {status === 'cancelled' ? 'Cancel' : status.replace("_", " ")}
+                      </Text>
+                    </Pressable>
+                  ))}
+                
+                {roleView === "customer" && item.bookingStatus === "requested" && (
+                  <>
+                    <View style={styles.vDivider} />
+                    <Pressable
+                      style={({ pressed }) => [styles.iconBtn, pressed && { opacity: 0.7 }]}
+                      onPress={() => onEdit(item)}
+                    >
+                      <Ionicons name="create-outline" size={18} color={Colors.primary} />
+                      <Text style={styles.iconBtnTextPrimary}>Edit</Text>
+                    </Pressable>
+                  </>
+                )}
+
+                <View style={styles.vDivider} />
+                
                 <Pressable
-                  style={({ pressed }) => [styles.deleteBtn, pressed && { opacity: 0.7 }]}
+                  style={({ pressed }) => [styles.iconBtn, pressed && { opacity: 0.7 }]}
                   onPress={() => onDelete(item._id)}
-                  accessibilityLabel="Delete booking"
-                  accessibilityRole="button"
                 >
-                  <Text style={styles.deleteBtnText}>Delete</Text>
+                  <Ionicons name="trash-outline" size={18} color={Colors.error} />
+                  <Text style={styles.iconBtnTextDanger}>Delete</Text>
                 </Pressable>
               </View>
             </View>
@@ -657,30 +731,38 @@ const styles = StyleSheet.create({
   },
   bookingMeta: { marginBottom: Spacing.md, gap: 4 },
   metaItem: { fontSize: FontSize.sm, color: Colors.textMuted, lineHeight: 20 },
-  actionRow: { flexDirection: "row", flexWrap: "wrap", gap: Spacing.sm },
-  actionBtn: {
-    backgroundColor: Colors.primarySurface,
-    borderRadius: Radius.sm,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 6,
-    borderWidth: 1,
-    borderColor: Colors.primaryBorder,
+  actionRow: { 
+    flexDirection: "row", 
+    flexWrap: "wrap", 
+    gap: 0,
+    alignItems: "center",
+    marginTop: Spacing.sm,
   },
-  actionBtnText: {
-    color: Colors.primary,
+  iconBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    gap: 4,
+  },
+  iconBtnTextPrimary: {
     fontSize: FontSize.xs,
     fontWeight: FontWeight.bold,
+    color: Colors.primary,
     textTransform: "capitalize",
   },
-  deleteBtn: {
-    backgroundColor: Colors.errorSurface,
-    borderRadius: Radius.sm,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 6,
-    borderWidth: 1,
-    borderColor: Colors.error,
+  iconBtnTextDanger: {
+    fontSize: FontSize.xs,
+    fontWeight: FontWeight.bold,
+    color: Colors.error,
+    textTransform: "capitalize",
   },
-  deleteBtnText: { color: Colors.error, fontSize: FontSize.xs, fontWeight: FontWeight.bold },
+  vDivider: {
+    width: 1,
+    height: 14,
+    backgroundColor: Colors.border,
+    marginHorizontal: 2,
+  },
 
   // Empty state
   emptyState: { alignItems: "center", paddingVertical: Spacing.xxxl * 2 },
@@ -693,6 +775,24 @@ const styles = StyleSheet.create({
   },
   emptyDesc: { fontSize: FontSize.sm, color: Colors.textMuted, textAlign: "center" },
 
+  inputError: {
+    borderColor: Colors.error,
+    borderWidth: 1.5,
+  },
+  fieldErrorText: {
+    color: Colors.error,
+    fontSize: FontSize.xs,
+    marginTop: 4,
+    marginBottom: Spacing.md,
+    marginLeft: 4,
+  },
+  pillErrorContainer: {
+    borderWidth: 1,
+    borderColor: Colors.error,
+    borderRadius: Radius.md,
+    padding: 4,
+    marginBottom: 4,
+  },
   // Date Picker Modal
   pickerOverlay: {
     flex: 1,

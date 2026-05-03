@@ -62,6 +62,7 @@ function JobCard({ item, onEdit, onDelete, onPress, currentUserId }) {
         <StatusBadge status={item.status || item.jobStatus || "open"} />
       </View>
       <Text style={styles.jobDesc} numberOfLines={2}>{item.jobDescription}</Text>
+      
       <View style={styles.jobFooter}>
         <View style={styles.budgetBadge}>
           <Text style={styles.budgetText}>Rs. {item.budgetMin} – {item.budgetMax}</Text>
@@ -69,12 +70,25 @@ function JobCard({ item, onEdit, onDelete, onPress, currentUserId }) {
 
         {isOwner && (
           <View style={styles.ownerActions}>
-            <Pressable style={styles.editBtn} onPress={() => onEdit(item)}>
-              <Text style={styles.editBtnText}>Edit</Text>
-            </Pressable>
-            <Pressable style={styles.deleteBtn} onPress={() => onDelete(item._id)}>
-              <Text style={styles.deleteBtnText}>Delete</Text>
-            </Pressable>
+            <TouchableOpacity 
+              style={styles.iconBtn} 
+              onPress={() => onEdit(item)}
+              accessibilityLabel="Edit Job"
+            >
+              <Ionicons name="create-outline" size={18} color={Colors.primary} />
+              <Text style={styles.iconBtnTextPrimary}>Edit</Text>
+            </TouchableOpacity>
+            
+            <View style={styles.vDivider} />
+
+            <TouchableOpacity 
+              style={styles.iconBtn} 
+              onPress={() => onDelete(item._id)}
+              accessibilityLabel="Delete Job"
+            >
+              <Ionicons name="trash-outline" size={18} color={Colors.error} />
+              <Text style={styles.iconBtnTextDanger}>Delete</Text>
+            </TouchableOpacity>
           </View>
         )}
       </View>
@@ -103,6 +117,7 @@ export default function JobsScreen({ navigation }) {
   const [editingId, setEditingId] = useState(null);
   const [createBusy, setCreateBusy] = useState(false);
   const [actionError, setActionError] = useState("");
+  const [errors, setErrors] = useState({});
 
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
   const [showDistrictPicker, setShowDistrictPicker] = useState(false);
@@ -128,6 +143,14 @@ export default function JobsScreen({ navigation }) {
 
   function updateForm(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }));
+    // Clear error for this field when user starts typing
+    if (errors[field]) {
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
+    }
   }
 
   function handleEdit(item) {
@@ -142,6 +165,7 @@ export default function JobsScreen({ navigation }) {
     setEditingId(item._id);
     setShowForm(true);
     setActionError("");
+    setErrors({});
   }
 
   function cancelEdit() {
@@ -149,6 +173,7 @@ export default function JobsScreen({ navigation }) {
     setEditingId(null);
     setShowForm(false);
     setActionError("");
+    setErrors({});
   }
 
   async function handleDelete(jobId) {
@@ -162,18 +187,25 @@ export default function JobsScreen({ navigation }) {
   }
 
   async function submitJob() {
-    if (!form.jobTitle || !form.category || !form.jobDescription) {
-      setActionError("Title, Category, and Description are required");
-      return;
-    }
+    const newErrors = {};
+    if (!form.jobTitle.trim()) newErrors.jobTitle = "Required";
+    if (!form.category) newErrors.category = "Required";
+    if (!form.jobDescription.trim()) newErrors.jobDescription = "Required";
 
     const min = Number(form.budgetMin) || 0;
     const max = Number(form.budgetMax) || 0;
 
     if (min > 0 && max > 0 && min >= max) {
+      newErrors.budgetMax = "Must be > Min";
       setActionError("Maximum budget must be greater than minimum budget");
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      if (!actionError) setActionError("Please fill in all required fields correctly.");
       return;
     }
+
     try {
       setActionError("");
       setCreateBusy(true);
@@ -192,6 +224,7 @@ export default function JobsScreen({ navigation }) {
       setForm(INITIAL_FORM);
       setEditingId(null);
       setShowForm(false);
+      setErrors({});
       await loadJobs();
     } catch (e) {
       setActionError(e.message || "Failed to save job");
@@ -331,11 +364,12 @@ export default function JobsScreen({ navigation }) {
                   <Text style={styles.sectionLabel}>General Information</Text>
                   <Text style={styles.label}>Job Title</Text>
                   <ThemedInput
-                    style={styles.input}
+                    style={[styles.input, errors.jobTitle && styles.inputError]}
                     placeholder="e.g. House plumbing repair"
                     value={form.jobTitle}
                     onChangeText={(v) => updateForm("jobTitle", v)}
                   />
+                  {errors.jobTitle && <Text style={styles.fieldErrorText}>{errors.jobTitle}</Text>}
                 </View>
 
                 {/* Section 2: Category & Location */}
@@ -349,6 +383,7 @@ export default function JobsScreen({ navigation }) {
                         placeholder="Select category"
                         onPress={() => setShowCategoryPicker(true)}
                         icon="construct-outline"
+                        error={errors.category}
                       />
                     </View>
                     <View style={{ flex: 1 }}>
@@ -382,7 +417,7 @@ export default function JobsScreen({ navigation }) {
                     </View>
                     <View style={{ flex: 1 }}>
                       <Text style={styles.label}>Max Budget</Text>
-                      <View style={styles.inputWithIcon}>
+                      <View style={[styles.inputWithIcon, errors.budgetMax && styles.inputError]}>
                         <Text style={styles.inputPrefix}>Rs.</Text>
                         <ThemedInput
                           style={styles.flexInput}
@@ -392,17 +427,19 @@ export default function JobsScreen({ navigation }) {
                           onChangeText={(v) => updateForm("budgetMax", v)}
                         />
                       </View>
+                      {errors.budgetMax && <Text style={styles.fieldErrorText}>{errors.budgetMax}</Text>}
                     </View>
                   </View>
 
                   <Text style={styles.label}>Job Description</Text>
                   <ThemedInput
-                    style={[styles.input, styles.textArea]}
+                    style={[styles.input, styles.textArea, errors.jobDescription && styles.inputError]}
                     placeholder="Provide details about the job, specific requirements, or timing..."
                     multiline
                     value={form.jobDescription}
                     onChangeText={(v) => updateForm("jobDescription", v)}
                   />
+                  {errors.jobDescription && <Text style={styles.fieldErrorText}>{errors.jobDescription}</Text>}
                 </View>
 
                 {actionError ? (
@@ -716,6 +753,36 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.bold,
     color: Colors.primary,
   },
+  ownerActions: {
+    flex: 1,
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    alignItems: "center",
+    gap: 0,
+  },
+  iconBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    gap: 4,
+  },
+  iconBtnTextPrimary: {
+    fontSize: FontSize.xs,
+    fontWeight: FontWeight.bold,
+    color: Colors.primary,
+  },
+  iconBtnTextDanger: {
+    fontSize: FontSize.xs,
+    fontWeight: FontWeight.bold,
+    color: Colors.error,
+  },
+  vDivider: {
+    width: 1,
+    height: 14,
+    backgroundColor: Colors.border,
+    marginHorizontal: 2,
+  },
 
   // Status badge
   badge: {
@@ -830,6 +897,17 @@ const styles = StyleSheet.create({
     padding: Spacing.md,
     borderRadius: Radius.md,
     marginBottom: Spacing.md,
+  },
+  inputError: {
+    borderColor: Colors.error,
+    borderWidth: 1.5,
+  },
+  fieldErrorText: {
+    color: Colors.error,
+    fontSize: FontSize.xs,
+    marginTop: -Spacing.md + 4,
+    marginBottom: Spacing.md,
+    marginLeft: 4,
   },
   primaryBtn: {
     backgroundColor: Colors.primary,

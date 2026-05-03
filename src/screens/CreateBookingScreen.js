@@ -24,6 +24,7 @@ export default function CreateBookingScreen() {
   const [duration, setDuration] = useState(1);
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [errors, setErrors] = useState({});
 
   // Auto-set date to tomorrow if today is too late (optional)
   useEffect(() => {
@@ -39,20 +40,19 @@ export default function CreateBookingScreen() {
   };
 
   const handleSubmit = async () => {
-    if (!date || !selectedTime) {
-      Alert.alert("Required", "Please select a date and time.");
-      return;
-    }
-    if (!notes.trim()) {
-      Alert.alert("Required", "Please provide details about the job.");
-      return;
-    }
+    const newErrors = {};
+    if (!selectedTime) newErrors.time = "Please select a time slot";
+    if (!notes.trim()) newErrors.notes = "Please provide job details";
 
     // Double check date validation before sending
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     if (date < today) {
-      Alert.alert("Invalid Date", "You cannot pick a date in the past.");
+      newErrors.date = "You cannot pick a date in the past";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
 
@@ -74,6 +74,16 @@ export default function CreateBookingScreen() {
     }
   };
 
+  function updateNotes(text) {
+    setNotes(text);
+    if (errors.notes) setErrors(prev => ({...prev, notes: null}));
+  }
+
+  function selectTime(time) {
+    setSelectedTime(time);
+    if (errors.time) setErrors(prev => ({...prev, time: null}));
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -88,9 +98,9 @@ export default function CreateBookingScreen() {
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>Date & Time</Text>
           
-          <Text style={styles.label}>Date</Text>
+           <Text style={styles.label}>Date</Text>
           <TouchableOpacity 
-            style={styles.input} 
+            style={[styles.input, errors.date && styles.inputError]} 
             onPress={() => setShowPicker(true)}
           >
             <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
@@ -100,6 +110,7 @@ export default function CreateBookingScreen() {
               <Ionicons name="calendar-outline" size={20} color={Colors.primary} />
             </View>
           </TouchableOpacity>
+          {errors.date && <Text style={styles.errorText}>{errors.date}</Text>}
 
           {/* Date Picker Modal - white background for both platforms */}
           <Modal
@@ -129,18 +140,19 @@ export default function CreateBookingScreen() {
             </View>
           </Modal>
 
-          <Text style={styles.label}>Start Time</Text>
-          <View style={styles.timeGrid}>
+           <Text style={styles.label}>Start Time</Text>
+          <View style={[styles.timeGrid, errors.time && styles.gridError]}>
             {TIME_SLOTS.map((time) => (
               <TouchableOpacity
                 key={time}
                 style={[styles.timeSlot, selectedTime === time && styles.timeSlotActive]}
-                onPress={() => setSelectedTime(time)}
+                onPress={() => selectTime(time)}
               >
                 <Text style={[styles.timeText, selectedTime === time && styles.timeTextActive]}>{time}</Text>
               </TouchableOpacity>
             ))}
           </View>
+          {errors.time && <Text style={styles.errorText}>{errors.time}</Text>}
         </View>
 
         <View style={styles.card}>
@@ -163,17 +175,18 @@ export default function CreateBookingScreen() {
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Service Details</Text>
+           <Text style={styles.sectionTitle}>Service Details</Text>
           <Text style={styles.label}>What do you need help with?</Text>
           <TextInput
-            style={[styles.input, styles.textArea]}
+            style={[styles.input, styles.textArea, errors.notes && styles.inputError]}
             placeholder="Please describe the task in detail..."
             placeholderTextColor={Colors.textMuted}
             multiline
             numberOfLines={4}
             value={notes}
-            onChangeText={setNotes}
+            onChangeText={updateNotes}
           />
+          {errors.notes && <Text style={styles.errorText}>{errors.notes}</Text>}
         </View>
       </ScrollView>
 
@@ -203,6 +216,9 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: FontSize.lg, fontWeight: FontWeight.bold, color: Colors.textPrimary, marginBottom: Spacing.md },
   label: { fontSize: FontSize.sm, fontWeight: "bold", color: Colors.textPrimary, marginBottom: Spacing.xs },
   input: { backgroundColor: Colors.background, borderWidth: 1, borderColor: Colors.border, borderRadius: 8, padding: Spacing.md, color: Colors.textPrimary, marginBottom: Spacing.md },
+  inputError: { borderColor: Colors.error, borderWidth: 1.5, marginBottom: 4 },
+  gridError: { padding: 4, borderWidth: 1, borderColor: Colors.error, borderRadius: 8 },
+  errorText: { color: Colors.error, fontSize: FontSize.xs, marginBottom: Spacing.md, marginLeft: 4 },
   textArea: { minHeight: 100, textAlignVertical: "top" },
   timeGrid: { flexDirection: "row", flexWrap: "wrap", gap: Spacing.sm },
   timeSlot: { paddingVertical: Spacing.sm, paddingHorizontal: Spacing.md, borderRadius: 8, borderWidth: 1, borderColor: Colors.border, backgroundColor: Colors.background },

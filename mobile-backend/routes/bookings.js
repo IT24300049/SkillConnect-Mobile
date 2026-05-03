@@ -81,6 +81,35 @@ router.post('/', auth, async (req, res) => {
     }
 });
 
+// PATCH /api/bookings/:id — update booking details (only by customer)
+router.patch('/:id', auth, async (req, res) => {
+    try {
+        const booking = await Booking.findById(req.params.id);
+        if (!booking) return res.status(404).json({ status: 'error', message: 'Booking not found' });
+
+        // Only the customer who created it can update details
+        if (booking.customer.toString() !== req.userId.toString()) {
+            return res.status(403).json({ status: 'error', message: 'Not authorized' });
+        }
+
+        // Can only update if still in 'requested' status
+        if (booking.bookingStatus !== 'requested') {
+            return res.status(400).json({ 
+                status: 'error', 
+                message: 'Cannot edit booking once it has been accepted or cancelled' 
+            });
+        }
+
+        const sanitized = sanitizeBookingData(req.body);
+        Object.assign(booking, sanitized);
+        
+        await booking.save();
+        res.json({ status: 'success', data: booking });
+    } catch (error) {
+        res.status(500).json({ status: 'error', message: 'Failed to update booking details' });
+    }
+});
+
 // PATCH /api/bookings/:id/status — update booking status (only valid transitions)
 router.patch('/:id/status', auth, async (req, res) => {
     try {
