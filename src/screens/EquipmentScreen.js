@@ -236,6 +236,11 @@ export default function EquipmentScreen() {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(INITIAL_FORM);
 
+  // Filtering State
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterCategory, setFilterCategory] = useState("All");
+  const [filterLocation, setFilterLocation] = useState("All");
+
   const supplierMode = user?.role === "supplier";
 
   const loadData = useCallback(async () => {
@@ -260,6 +265,16 @@ export default function EquipmentScreen() {
     }
     return set;
   }, [items, user?.userId]);
+
+  // Filtering Logic
+  const filteredItems = useMemo(() => {
+    return items.filter((item) => {
+      const nameMatch = (item.equipmentName || item.name || "").toLowerCase().includes(searchQuery.toLowerCase());
+      const categoryMatch = filterCategory === "All" || item.category === filterCategory;
+      const locationMatch = filterLocation === "All" || item.location === filterLocation;
+      return nameMatch && categoryMatch && locationMatch;
+    });
+  }, [items, searchQuery, filterCategory, filterLocation]);
 
   function updateForm(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -333,7 +348,7 @@ export default function EquipmentScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <FlatList
-        data={items}
+        data={filteredItems}
         keyExtractor={(item) => item._id}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
@@ -344,7 +359,7 @@ export default function EquipmentScreen() {
               <View>
                 <Text style={styles.pageTitle}>Equipment</Text>
                 <Text style={styles.pageSubtitle}>
-                  {loading ? "Loading..." : `${items.length} item${items.length !== 1 ? "s" : ""} available`}
+                  {loading ? "Loading..." : `${filteredItems.length} result${filteredItems.length !== 1 ? "s" : ""} found`}
                 </Text>
               </View>
               <View style={styles.headerActions}>
@@ -367,6 +382,72 @@ export default function EquipmentScreen() {
                 )}
               </View>
             </View>
+
+            {/* ── Search & Filters ── */}
+            {!showForm && (
+              <View style={styles.filterSection}>
+                <View style={styles.searchBar}>
+                  <Ionicons name="search-outline" size={18} color={C.textMut} />
+                  <TextInput
+                    style={styles.searchInput}
+                    placeholder="Search equipment..."
+                    placeholderTextColor={C.textMut}
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
+                  />
+                  {searchQuery !== "" && (
+                    <TouchableOpacity onPress={() => setSearchQuery("")}>
+                      <Ionicons name="close-circle" size={18} color={C.textMut} />
+                    </TouchableOpacity>
+                  )}
+                </View>
+
+                <View style={styles.filterRow}>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterChips}>
+                    {["All", ...CATEGORIES].map((cat) => (
+                      <TouchableOpacity
+                        key={cat}
+                        style={[styles.filterChip, filterCategory === cat && styles.filterChipActive]}
+                        onPress={() => setFilterCategory(cat)}
+                      >
+                        <Text style={[styles.filterChipText, filterCategory === cat && styles.filterChipTextActive]}>
+                          {cat}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+
+                <View style={styles.locationFilterRow}>
+                  <TouchableOpacity
+                    style={styles.locationSelector}
+                    onPress={() => {
+                      // We can reuse the DistrictDropdown logic or just simple toggle for now
+                      // But since we want "Pro Max", let's make it look like a nice pill
+                    }}
+                  >
+                    <Ionicons name="location" size={14} color={filterLocation !== "All" ? C.primary : C.textSec} />
+                    <Text style={[styles.locationLabel, filterLocation !== "All" && { color: C.primary }]}>
+                      {filterLocation === "All" ? "Everywhere" : filterLocation}
+                    </Text>
+                  </TouchableOpacity>
+
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.locationChips}>
+                    {["All", "Colombo", "Gampaha", "Kandy", "Galle"].map((loc) => (
+                      <TouchableOpacity
+                        key={loc}
+                        style={[styles.miniChip, filterLocation === loc && styles.miniChipActive]}
+                        onPress={() => setFilterLocation(loc)}
+                      >
+                        <Text style={[styles.miniChipText, filterLocation === loc && styles.miniChipTextActive]}>
+                          {loc}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+              </View>
+            )}
 
             {/* ── Error Banner ── */}
             {(error || actionError) ? (
@@ -501,9 +582,9 @@ export default function EquipmentScreen() {
             )}
 
             {/* Section heading for list */}
-            {!loading && items.length > 0 && (
+            {!loading && filteredItems.length > 0 && (
               <View style={styles.listHeaderRow}>
-                <Text style={styles.listHeading}>All Listings</Text>
+                <Text style={styles.listHeading}>{searchQuery || filterCategory !== "All" ? "Search Results" : "All Listings"}</Text>
               </View>
             )}
           </View>
@@ -512,12 +593,27 @@ export default function EquipmentScreen() {
           !loading ? (
             <View style={styles.emptyState}>
               <View style={styles.emptyIconBg}>
-                <Ionicons name="construct-outline" size={36} color={C.textMut} />
+                <Ionicons name={searchQuery ? "search-outline" : "construct-outline"} size={36} color={C.textMut} />
               </View>
-              <Text style={styles.emptyTitle}>No Equipment Found</Text>
+              <Text style={styles.emptyTitle}>{searchQuery ? "No Results Found" : "No Equipment Found"}</Text>
               <Text style={styles.emptyDesc}>
-                {supplierMode ? "Tap the + Add button above to create your first listing." : "Check back later — no equipment is available right now."}
+                {searchQuery 
+                  ? "We couldn't find any items matching your search. Try different keywords or reset filters."
+                  : (supplierMode ? "Tap the + Add button above to create your first listing." : "Check back later — no equipment is available right now.")
+                }
               </Text>
+              { (searchQuery || filterCategory !== "All" || filterLocation !== "All") && (
+                <TouchableOpacity 
+                  style={styles.resetBtn} 
+                  onPress={() => {
+                    setSearchQuery("");
+                    setFilterCategory("All");
+                    setFilterLocation("All");
+                  }}
+                >
+                  <Text style={styles.resetBtnText}>Clear All Filters</Text>
+                </TouchableOpacity>
+              )}
             </View>
           ) : null
         }
@@ -752,6 +848,50 @@ const styles = StyleSheet.create({
     borderColor: "rgba(255,68,68,0.3)", backgroundColor: "rgba(255,68,68,0.08)",
   },
   deleteBtnText: { color: C.error, fontWeight: "700", fontSize: 13 },
+
+  /* Filters */
+  filterSection: { paddingHorizontal: 20, marginBottom: 16 },
+  searchBar: {
+    flexDirection: "row", alignItems: "center", gap: 10,
+    backgroundColor: C.card, borderWidth: 1, borderColor: C.cardBorder,
+    borderRadius: 14, paddingHorizontal: 16, paddingVertical: 12,
+    marginBottom: 12,
+  },
+  searchInput: { flex: 1, color: C.text, fontSize: 15 },
+  filterRow: { marginBottom: 12 },
+  filterChips: { gap: 8 },
+  filterChip: {
+    paddingHorizontal: 14, paddingVertical: 8,
+    borderRadius: 10, backgroundColor: C.surface2,
+    borderWidth: 1, borderColor: C.cardBorder,
+  },
+  filterChipActive: { backgroundColor: C.primary, borderColor: C.primary },
+  filterChipText: { color: C.textSec, fontSize: 13, fontWeight: "600" },
+  filterChipTextActive: { color: "#fff" },
+
+  locationFilterRow: { flexDirection: "row", alignItems: "center", gap: 12 },
+  locationSelector: {
+    flexDirection: "row", alignItems: "center", gap: 6,
+    backgroundColor: C.surface2, borderRadius: 10,
+    paddingHorizontal: 10, paddingVertical: 8,
+    borderWidth: 1, borderColor: C.cardBorder,
+  },
+  locationLabel: { fontSize: 13, color: C.textSec, fontWeight: "600" },
+  locationChips: { gap: 6 },
+  miniChip: {
+    paddingHorizontal: 10, paddingVertical: 6,
+    borderRadius: 8, backgroundColor: C.input,
+    borderWidth: 1, borderColor: C.inputBorder,
+  },
+  miniChipActive: { backgroundColor: C.primarySurface, borderColor: C.primary },
+  miniChipText: { color: C.textMut, fontSize: 12, fontWeight: "500" },
+  miniChipTextActive: { color: C.primary, fontWeight: "700" },
+
+  resetBtn: {
+    marginTop: 16, paddingHorizontal: 20, paddingVertical: 10,
+    borderRadius: 10, borderWidth: 1, borderColor: C.divider,
+  },
+  resetBtnText: { color: C.textSec, fontSize: 14, fontWeight: "600" },
 
   /* Empty state */
   emptyState: { alignItems: "center", paddingVertical: 60, paddingHorizontal: 32 },

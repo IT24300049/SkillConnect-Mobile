@@ -70,6 +70,12 @@ export default function EditProfileScreen({ navigation }) {
       return;
     }
 
+    const phoneDigits = form.phone.replace(/\D/g, "");
+    if (phoneDigits.length !== 10) {
+      Alert.alert("Validation", "Phone number must be exactly 10 digits (e.g., 07XXXXXXXX).");
+      return;
+    }
+
     setSaving(true);
     try {
       const payload = { ...form };
@@ -135,10 +141,11 @@ export default function EditProfileScreen({ navigation }) {
           <TextInput
             style={styles.input}
             value={form.phone}
-            onChangeText={(v) => setForm({ ...form, phone: v })}
-            placeholder="Phone Number"
+            onChangeText={(v) => setForm({ ...form, phone: v.replace(/\D/g, "").slice(0, 10) })}
+            placeholder="e.g. 0771234567"
             placeholderTextColor={Colors.textMuted}
-            keyboardType="phone-pad"
+            keyboardType="number-pad"
+            maxLength={10}
           />
         </View>
 

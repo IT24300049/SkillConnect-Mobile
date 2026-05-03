@@ -24,12 +24,28 @@ const authValidation = {
         body('phone')
             .optional()
             .trim()
-            .matches(/^\d{10,}$/)
-            .withMessage('Phone must contain at least 10 digits'),
+            .matches(/^\d{10}$/)
+            .withMessage('Phone must be exactly 10 digits'),
         body('role')
             .optional()
             .isIn(['customer', 'worker', 'supplier', 'admin'])
             .withMessage('Invalid role')
+    ],
+    profile: [
+        body('firstName')
+            .optional()
+            .trim()
+            .isLength({ min: 2 })
+            .withMessage('First name must be at least 2 characters'),
+        body('phone')
+            .optional()
+            .trim()
+            .matches(/^\d{10}$/)
+            .withMessage('Phone must be exactly 10 digits'),
+        body('hourlyRate')
+            .optional()
+            .isNumeric()
+            .withMessage('Hourly rate must be a number'),
     ],
     login: [
         body('email')

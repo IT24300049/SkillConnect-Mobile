@@ -54,7 +54,7 @@ router.get('/me', auth, async (req, res) => {
 
 // ROUTE: Update my own profile
 // PUT /api/profile/me
-router.put('/me', auth, async (req, res) => {
+router.put('/me', auth, authValidation.profile, validate, async (req, res) => {
     try {
         const sanitized = sanitizeProfileData(req.body);
         const user = await User.findByIdAndUpdate(req.userId, sanitized, { new: true });
