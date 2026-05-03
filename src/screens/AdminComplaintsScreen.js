@@ -9,7 +9,7 @@ import StatusBadge from "../components/StatusBadge";
 
 export default function AdminComplaintsScreen() {
   const { token } = useAuth();
-  
+
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -45,11 +45,11 @@ export default function AdminComplaintsScreen() {
     const titleMatch = c.complaintTitle?.toLowerCase().includes(searchQuery.toLowerCase());
     const idMatch = c._id?.toLowerCase().includes(searchQuery.toLowerCase());
     if (searchQuery && !titleMatch && !idMatch) return false;
-    
+
     if (activeTab === "Action Needed") return c.complaintStatus === "pending" || c.complaintStatus === "investigating";
     if (activeTab === "Resolved") return c.complaintStatus === "resolved";
     if (activeTab === "Urgent") return c.priority === "urgent";
-    
+
     return true;
   });
 
@@ -73,7 +73,16 @@ export default function AdminComplaintsScreen() {
 
         <View style={styles.detailsRow}>
           <View style={styles.detailItem}>
-            <Text style={styles.detailText}>ID: {item._id?.slice(-6).toUpperCase()}</Text>
+            <Ionicons name="person-outline" size={14} color={Colors.textMuted} />
+            <Text style={styles.detailText}>
+              By: {item.complainant ? `${item.complainant.firstName || ""} ${item.complainant.lastName || ""}`.trim() : "Unknown"}
+            </Text>
+          </View>
+          <View style={styles.detailItem}>
+            <Ionicons name="alert-circle-outline" size={14} color={Colors.error} />
+            <Text style={[styles.detailText, { color: Colors.error }]}>
+              Against: {item.complainedAgainst ? `${item.complainedAgainst.firstName || ""} ${item.complainedAgainst.lastName || ""}`.trim() : "N/A"}
+            </Text>
           </View>
           <View style={styles.detailItem}>
             <Ionicons name="calendar-outline" size={14} color={Colors.textMuted} />
@@ -85,14 +94,14 @@ export default function AdminComplaintsScreen() {
         <View style={styles.actionRow}>
           {(item.complaintStatus?.toLowerCase() === "pending" || item.complaintStatus?.toLowerCase() === "investigating") ? (
             <>
-              <TouchableOpacity 
-                style={[styles.actionBtn, styles.resolveBtn]} 
+              <TouchableOpacity
+                style={[styles.actionBtn, styles.resolveBtn]}
                 onPress={() => handleStatusChange(item._id, "resolved")}
               >
                 <Text style={styles.actionBtnText}>Resolve</Text>
               </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.actionBtn, styles.rejectBtn]} 
+              <TouchableOpacity
+                style={[styles.actionBtn, styles.rejectBtn]}
                 onPress={() => handleStatusChange(item._id, "rejected")}
               >
                 <Text style={styles.actionBtnText}>Reject</Text>
@@ -140,7 +149,7 @@ export default function AdminComplaintsScreen() {
 
       <View style={styles.tabsContainer}>
         {["All", "Action Needed", "Urgent", "Resolved"].map(tab => (
-          <TouchableOpacity 
+          <TouchableOpacity
             key={tab}
             style={[styles.tabBtn, activeTab === tab && styles.tabBtnActive]}
             onPress={() => setActiveTab(tab)}
@@ -195,7 +204,7 @@ const styles = StyleSheet.create({
   cardHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: Spacing.sm },
   title: { fontSize: FontSize.md, fontWeight: "bold", color: Colors.textPrimary, flex: 1, marginRight: Spacing.sm },
   description: { fontSize: FontSize.sm, color: Colors.textSecondary, marginBottom: Spacing.md, lineHeight: 20 },
-  detailsRow: { flexDirection: "row", justifyContent: "space-between", borderTopWidth: 1, borderTopColor: Colors.divider, paddingTop: Spacing.md },
+  detailsRow: { flexDirection: "row", justifyContent: "space-between", flexWrap: "wrap", borderTopWidth: 1, borderTopColor: Colors.divider, paddingTop: Spacing.md, gap: Spacing.sm },
   detailItem: { flexDirection: "row", alignItems: "center" },
   detailText: { marginLeft: 4, color: Colors.textMuted, fontSize: FontSize.xs, fontWeight: "500" },
   emptyState: { alignItems: "center", justifyContent: "center", padding: Spacing.xl, marginTop: 40 },

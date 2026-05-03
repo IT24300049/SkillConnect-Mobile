@@ -8,11 +8,14 @@ import {
   Text,
   View,
   ActivityIndicator,
+  RefreshControl,
 } from "react-native";
 import { useRoute } from "@react-navigation/native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import ThemedInput from "../components/ThemedInput";
 import { useAuth } from "../context/AuthContext";
+import { Colors, Spacing, FontSize, FontWeight, Radius, SharedStyles, Shadow } from "../theme";
+import StatusBadge from "../components/StatusBadge";
 import {
   createComplaint,
   deleteComplaint,
@@ -22,22 +25,6 @@ import {
   getWorkers,
   updateComplaintStatus,
 } from "../services/apiClient";
-
-const C = {
-  primary: "#FF6B00",
-  primarySurface: "rgba(255, 107, 0, 0.1)",
-  primaryBorder: "rgba(255, 107, 0, 0.2)",
-  card: "#1E1E1E",
-  background: "#121212",
-  border: "#333",
-  input: "#252525",
-  text: "#FFFFFF",
-  textSec: "#B0B0B0",
-  textMut: "#666666",
-  error: "#FF4D4D",
-  errorSurf: "rgba(255, 77, 77, 0.1)",
-  success: "#4CAF50",
-};
 
 const INITIAL_FORM = {
   complainedAgainst: "",
@@ -51,6 +38,21 @@ const INITIAL_FORM = {
   priority: "medium",
 };
 
+const CATEGORIES = [
+  { id: "service_quality", label: "Quality", icon: "ribbon-outline" },
+  { id: "inappropriate_behavior", label: "Behavior", icon: "hand-left-outline" },
+  { id: "fraud", label: "Fraud", icon: "shield-alert-outline" },
+  { id: "payment_issue", label: "Payment", icon: "cash-outline" },
+  { id: "other", label: "Other", icon: "ellipsis-horizontal-outline" },
+];
+
+const PRIORITIES = [
+  { id: "low", label: "Low", color: Colors.success },
+  { id: "medium", label: "Medium", color: Colors.warning },
+  { id: "high", label: "High", color: Colors.error },
+  { id: "urgent", label: "Urgent", color: "#B71C1C" },
+];
+
 export default function ComplaintsScreen() {
   const { token, user } = useAuth();
   const route = useRoute();
@@ -58,9 +60,11 @@ export default function ComplaintsScreen() {
   const [workers, setWorkers] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
   const [actionError, setActionError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [showForm, setShowForm] = useState(false);
 
   const [form, setForm] = useState(INITIAL_FORM);
 
@@ -70,28 +74,25 @@ export default function ComplaintsScreen() {
     try {
       setError("");
       setLoading(true);
-      
-      // Determine what type of users we can report against
-      // Customers report Workers, Workers report Customers
       const isWorker = user?.role === "worker";
       const userListPromise = isWorker ? getCustomers(token) : getWorkers(token);
 
       const [complaintsData, reportableUsers, bookingsData] = await Promise.all([
-        getComplaints(token, adminMode),
+        getComplaints(token, false),
         userListPromise,
         getMyBookings(token, isWorker ? "worker" : "customer"),
       ]);
 
       setComplaints(complaintsData);
-      setWorkers(reportableUsers); 
+      setWorkers(reportableUsers);
       setBookings(bookingsData);
     } catch (e) {
-      console.error("Load Complaints Error:", e);
       setError(e.message || "Failed to load complaints");
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
-  }, [token, adminMode, user?.role]);
+  }, [token, user?.role]);
 
   useEffect(() => {
     loadData();
@@ -107,6 +108,7 @@ export default function ComplaintsScreen() {
         job: route.params.jobId || "",
         jobTitle: route.params.jobTitle || ""
       }));
+      setShowForm(true);
     }
   }, [route.params]);
 
@@ -116,7 +118,7 @@ export default function ComplaintsScreen() {
 
   async function submitComplaint() {
     if (!form.complainedAgainst || !form.complaintTitle || !form.complaintDescription) {
-      setActionError("All fields are required");
+      setActionError("Please fill all required fields");
       return;
     }
 
@@ -125,6 +127,7 @@ export default function ComplaintsScreen() {
       setSubmitting(true);
       await createComplaint(token, form);
       setForm(INITIAL_FORM);
+      setShowForm(false);
       await loadData();
     } catch (e) {
       setActionError(e.message || "Failed to create complaint");
@@ -146,259 +149,371 @@ export default function ComplaintsScreen() {
   async function handleStatusChange(complaintId, status) {
     try {
       setActionError("");
-      await updateComplaintStatus(token, complaintId, status, "Updated from App");
+      await updateComplaintStatus(token, complaintId, status, "Resolution through App");
       await loadData();
     } catch (e) {
       setActionError(e.message || "Failed to update status");
     }
   }
 
-  return (
-    <SafeAreaView style={styles.container}>
-      <FlatList
-        data={complaints}
-        keyExtractor={(item) => item._id}
-        contentContainerStyle={styles.list}
-        ListHeaderComponent={
-          <ScrollView style={styles.headerWrap}>
-            <View style={styles.topRow}>
-              <Text style={styles.title}>Complaints</Text>
-              <Pressable style={styles.refreshBtn} onPress={loadData}>
-                <Ionicons name="refresh" size={20} color={C.text} />
-              </Pressable>
+  const renderHeader = () => (
+    <View style={styles.header}>
+      <View style={styles.headerTop}>
+        <View>
+          <Text style={SharedStyles.screenTitle}>Complaints</Text>
+          <Text style={SharedStyles.screenSubtitle}>
+            {adminMode ? "Manage system-wide issues" : "Report and track your issues"}
+          </Text>
+        </View>
+        <Pressable
+          style={({ pressed }) => [styles.refreshBtn, pressed && { opacity: 0.7 }]}
+          onPress={() => { setRefreshing(true); loadData(); }}
+        >
+          <Ionicons name="refresh" size={20} color={Colors.textPrimary} />
+        </Pressable>
+      </View>
+
+      {!adminMode && (
+        <View style={[SharedStyles.card, styles.formCard]}>
+          <Pressable
+            style={styles.formHeader}
+            onPress={() => setShowForm(!showForm)}
+          >
+            <View style={styles.formTitleRow}>
+              <Ionicons
+                name={showForm ? "remove-circle-outline" : "add-circle-outline"}
+                size={22}
+                color={Colors.primary}
+              />
+              <Text style={styles.formTitle}>File a New Complaint</Text>
             </View>
+            <Ionicons
+              name={showForm ? "chevron-up" : "chevron-down"}
+              size={20}
+              color={Colors.textMuted}
+            />
+          </Pressable>
 
-            {!adminMode && (
-              <View style={styles.card}>
-                <Text style={styles.cardTitle}>File a Complaint</Text>
+          {showForm && (
+            <View style={styles.formContent}>
+              <View style={styles.divider} />
 
-                {form.workerName || form.jobTitle ? (
-                  <View style={styles.targetInfo}>
-                    <View style={styles.targetIcon}>
-                      <Ionicons name="warning-outline" size={32} color={C.error} />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.targetLabel, { color: C.error }]}>REPORTING</Text>
-                      <Text style={styles.targetName}>{form.workerName || "Professional"}</Text>
-                      {form.jobTitle && <Text style={styles.targetSub}>{form.jobTitle}</Text>}
-                    </View>
-                    <Pressable onPress={() => setForm(INITIAL_FORM)} style={styles.clearBtn}>
-                      <Ionicons name="close-circle" size={20} color={C.textMut} />
-                    </Pressable>
+              {form.workerName || form.jobTitle ? (
+                <View style={styles.targetBanner}>
+                  <View style={styles.targetIconBox}>
+                    <Ionicons name="warning" size={24} color={Colors.error} />
                   </View>
-                ) : (
-                  <>
-                    <Text style={styles.label}>{user?.role === 'worker' ? 'Report a Customer' : 'Report a Professional'}</Text>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillRow}>
-                      {workers.map((w) => (
-                        <Pressable
-                          key={w._id}
-                          style={[styles.pill, form.complainedAgainst === w._id && styles.pillActive]}
-                          onPress={() => {
-                            updateForm("complainedAgainst", w._id);
-                            updateForm("workerName", `${w.firstName || ""} ${w.lastName || ""}`.trim());
-                          }}
-                        >
-                          <Text style={[styles.pillText, form.complainedAgainst === w._id && styles.pillTextActive]}>
-                            {`${w.firstName || ""} ${w.lastName || ""}`.trim() || w._id.slice(-6)}
-                          </Text>
-                        </Pressable>
-                      ))}
-                    </ScrollView>
-                  </>
-                )}
-
-                <View style={{ marginTop: 12 }}>
-                  <Text style={styles.label}>Complaint Category</Text>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillRow}>
-                    {[
-                      { id: 'service_quality', label: 'Quality' },
-                      { id: 'inappropriate_behavior', label: 'Behavior' },
-                      { id: 'fraud', label: 'Fraud' },
-                      { id: 'payment_issue', label: 'Payment' },
-                      { id: 'other', label: 'Other' }
-                    ].map((cat) => (
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.targetLabel}>REPORTING AGAINST</Text>
+                    <Text style={styles.targetName}>{form.workerName || "Professional"}</Text>
+                    {form.jobTitle && <Text style={styles.targetSub}>{form.jobTitle}</Text>}
+                  </View>
+                  <Pressable onPress={() => setForm(INITIAL_FORM)} style={styles.clearBtn}>
+                    <Ionicons name="close-circle" size={24} color={Colors.textMuted} />
+                  </Pressable>
+                </View>
+              ) : (
+                <View style={styles.fieldGroup}>
+                  <Text style={SharedStyles.label}>
+                    {user?.role === "worker" ? "Select Customer" : "Select Professional"}
+                  </Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillScroll}>
+                    {workers.map((w) => (
                       <Pressable
-                        key={cat.id}
-                        style={[styles.pill, form.complaintCategory === cat.id && styles.pillActive]}
-                        onPress={() => updateForm("complaintCategory", cat.id)}
+                        key={w._id}
+                        style={[SharedStyles.pill, form.complainedAgainst === w._id && SharedStyles.pillActive]}
+                        onPress={() => {
+                          updateForm("complainedAgainst", w._id);
+                          updateForm("workerName", `${w.firstName || ""} ${w.lastName || ""}`.trim());
+                        }}
                       >
-                        <Text style={[styles.pillText, form.complaintCategory === cat.id && styles.pillTextActive]}>
-                          {cat.label}
+                        <Text style={[SharedStyles.pillText, form.complainedAgainst === w._id && SharedStyles.pillTextActive]}>
+                          {`${w.firstName || ""} ${w.lastName || ""}`.trim() || w._id.slice(-6)}
                         </Text>
                       </Pressable>
                     ))}
                   </ScrollView>
                 </View>
+              )}
 
-                <View style={{ marginTop: 8 }}>
-                  <Text style={styles.label}>Priority Level</Text>
-                  <View style={[styles.pillRow, { flexDirection: 'row', flexWrap: 'wrap' }]}>
-                    {[
-                      { id: 'low', label: 'Low', color: '#4CAF50' },
-                      { id: 'medium', label: 'Medium', color: '#FF9800' },
-                      { id: 'high', label: 'High', color: '#F44336' },
-                      { id: 'urgent', label: 'Urgent', color: '#B71C1C' }
-                    ].map((p) => (
-                      <Pressable
-                        key={p.id}
-                        style={[
-                          styles.pill, 
-                          form.priority === p.id && { backgroundColor: p.color, borderColor: p.color }
-                        ]}
-                        onPress={() => updateForm("priority", p.id)}
-                      >
-                        <Text style={[styles.pillText, form.priority === p.id && { color: '#fff' }]}>
-                          {p.label}
+              <View style={styles.fieldGroup}>
+                <Text style={SharedStyles.label}>Category</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillScroll}>
+                  {CATEGORIES.map((cat) => (
+                    <Pressable
+                      key={cat.id}
+                      style={[SharedStyles.pill, form.complaintCategory === cat.id && SharedStyles.pillActive]}
+                      onPress={() => updateForm("complaintCategory", cat.id)}
+                    >
+                      <View style={styles.pillContent}>
+                        <Ionicons
+                          name={cat.icon}
+                          size={14}
+                          color={form.complaintCategory === cat.id ? Colors.textOnPrimary : Colors.textSecondary}
+                          style={{ marginRight: 4 }}
+                        />
+                        <Text style={[SharedStyles.pillText, form.complaintCategory === cat.id && SharedStyles.pillTextActive]}>
+                          {cat.label}
                         </Text>
-                      </Pressable>
-                    ))}
-                  </View>
-                </View>
+                      </View>
+                    </Pressable>
+                  ))}
+                </ScrollView>
+              </View>
 
-                <Text style={styles.label}>Summary</Text>
+              <View style={styles.fieldGroup}>
+                <Text style={SharedStyles.label}>Priority</Text>
+                <View style={styles.priorityGrid}>
+                  {PRIORITIES.map((p) => (
+                    <Pressable
+                      key={p.id}
+                      style={[
+                        SharedStyles.pill,
+                        styles.priorityPill,
+                        form.priority === p.id && { backgroundColor: p.color, borderColor: p.color }
+                      ]}
+                      onPress={() => updateForm("priority", p.id)}
+                    >
+                      <Text style={[SharedStyles.pillText, form.priority === p.id && { color: "#fff" }]}>
+                        {p.label}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </View>
+
+              <View style={styles.fieldGroup}>
+                <Text style={SharedStyles.label}>Summary</Text>
                 <ThemedInput
                   style={styles.input}
-                  placeholder="Brief summary of the issue"
+                  placeholder="e.g., Late arrival, missing tools..."
                   value={form.complaintTitle}
                   onChangeText={(v) => updateForm("complaintTitle", v)}
                 />
+              </View>
 
-                <Text style={styles.label}>Description</Text>
+              <View style={styles.fieldGroup}>
+                <Text style={SharedStyles.label}>Description</Text>
                 <ThemedInput
                   style={[styles.input, styles.textArea]}
-                  placeholder="Detailed description..."
+                  placeholder="Tell us more about what happened..."
                   multiline
                   numberOfLines={4}
                   value={form.complaintDescription}
                   onChangeText={(v) => updateForm("complaintDescription", v)}
                 />
-
-                <Pressable 
-                  style={[styles.primaryBtn, submitting && { opacity: 0.7 }]} 
-                  onPress={submitComplaint} 
-                  disabled={submitting}
-                >
-                  {submitting ? (
-                    <ActivityIndicator color="#fff" size="small" />
-                  ) : (
-                    <Text style={styles.primaryBtnText}>Submit Report</Text>
-                  )}
-                </Pressable>
               </View>
-            )}
 
-            {error ? <Text style={styles.error}>{error}</Text> : null}
-            {actionError ? <Text style={styles.error}>{actionError}</Text> : null}
-            {loading ? <Text style={styles.helper}>Loading...</Text> : null}
-          </ScrollView>
-        }
-        ListEmptyComponent={!loading ? <Text style={styles.helper}>No complaints found.</Text> : null}
-        renderItem={({ item }) => {
-          const mine = !adminMode && (item.complainant?._id || item.complainant) === user?.id;
-          return (
-            <View style={styles.card}>
-              <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                <Text style={styles.itemTitle}>{item.complaintTitle || "Complaint"}</Text>
-                <Text style={[styles.meta, { color: item.priority === "high" || item.priority === "urgent" ? C.error : C.textSec }]}>
-                  {item.priority?.toUpperCase()}
-                </Text>
-              </View>
-              <Text style={styles.meta}>Status: {item.complaintStatus?.toUpperCase()}</Text>
-              <Text style={styles.description}>{item.complaintDescription}</Text>
+              {actionError ? <Text style={styles.errorText}>{actionError}</Text> : null}
 
-              <View style={styles.actionRow}>
-                {mine && (
-                  <Pressable style={[styles.smallBtn, styles.deleteBtn]} onPress={() => handleDelete(item._id)}>
-                    <Text style={styles.smallBtnText}>Delete</Text>
-                  </Pressable>
+              <Pressable
+                style={[SharedStyles.primaryButton, submitting && { opacity: 0.7 }]}
+                onPress={submitComplaint}
+                disabled={submitting}
+              >
+                {submitting ? (
+                  <ActivityIndicator color={Colors.textOnPrimary} size="small" />
+                ) : (
+                  <Text style={SharedStyles.primaryButtonText}>Submit Report</Text>
                 )}
-                {adminMode && (
-                  <>
-                    <Pressable style={styles.smallBtn} onPress={() => handleStatusChange(item._id, "resolved")}>
-                      <Text style={styles.smallBtnText}>Resolve</Text>
-                    </Pressable>
-                    <Pressable style={styles.smallBtn} onPress={() => handleStatusChange(item._id, "rejected")}>
-                      <Text style={styles.smallBtnText}>Reject</Text>
-                    </Pressable>
-                  </>
-                )}
-              </View>
+              </Pressable>
             </View>
-          );
-        }}
+          )}
+        </View>
+      )}
+
+      {complaints.length > 0 && (
+        <Text style={[SharedStyles.sectionTitle, { marginTop: Spacing.lg }]}>Recent History</Text>
+      )}
+    </View>
+  );
+
+  const renderComplaintCard = ({ item }) => {
+    const mine = !adminMode && (item.complainant?._id || item.complainant) === user?.id;
+    const priorityColor = PRIORITIES.find(p => p.id === item.priority)?.color || Colors.textMuted;
+
+    return (
+      <View style={[SharedStyles.card, styles.complaintCard]}>
+        <View style={[styles.priorityTag, { backgroundColor: priorityColor }]} />
+
+        <View style={styles.cardHeader}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.itemTitle} numberOfLines={1}>{item.complaintTitle || "Complaint"}</Text>
+            <Text style={styles.categoryText}>
+              {CATEGORIES.find(c => c.id === item.complaintCategory)?.label || "Other"}
+            </Text>
+          </View>
+          <StatusBadge status={item.complaintStatus} />
+        </View>
+
+        <Text style={styles.itemDescription}>{item.complaintDescription}</Text>
+
+        <View style={styles.cardFooter}>
+          <View style={styles.metaRow}>
+            <View style={styles.metaItem}>
+              <Ionicons name="person-outline" size={14} color={Colors.textMuted} />
+              <Text style={styles.metaLabel}>By: </Text>
+              <Text style={styles.metaValue} numberOfLines={1}>
+                {item.complainant ? `${item.complainant.firstName || ""} ${item.complainant.lastName || ""}`.trim() : "You"}
+              </Text>
+            </View>
+            <View style={styles.metaItem}>
+              <Ionicons name="alert-circle-outline" size={14} color={Colors.error} />
+              <Text style={styles.metaLabel}>Against: </Text>
+              <Text style={styles.metaValue} numberOfLines={1}>
+                {item.complainedAgainst ? `${item.complainedAgainst.firstName || ""} ${item.complainedAgainst.lastName || ""}`.trim() : "N/A"}
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.dateRow}>
+            <Ionicons name="calendar-outline" size={14} color={Colors.textMuted} />
+            <Text style={styles.dateText}>{new Date(item.createdAt).toLocaleDateString()}</Text>
+          </View>
+        </View>
+
+        <View style={styles.cardActions}>
+          {mine && (
+            <Pressable style={styles.actionBtn} onPress={() => handleDelete(item._id)}>
+              <Ionicons name="trash-outline" size={16} color={Colors.error} />
+              <Text style={[styles.actionBtnText, { color: Colors.error }]}>Withdraw</Text>
+            </Pressable>
+          )}
+
+          {adminMode && (item.complaintStatus === "pending" || item.complaintStatus === "investigating") && (
+            <View style={styles.adminActions}>
+              <Pressable
+                style={[styles.actionBtn, styles.resolveBtn]}
+                onPress={() => handleStatusChange(item._id, "resolved")}
+              >
+                <Ionicons name="checkmark-circle-outline" size={16} color={Colors.success} />
+                <Text style={[styles.actionBtnText, { color: Colors.success }]}>Resolve</Text>
+              </Pressable>
+              <Pressable
+                style={[styles.actionBtn, styles.rejectBtn]}
+                onPress={() => handleStatusChange(item._id, "rejected")}
+              >
+                <Ionicons name="close-circle-outline" size={16} color={Colors.error} />
+                <Text style={[styles.actionBtnText, { color: Colors.error }]}>Reject</Text>
+              </Pressable>
+            </View>
+          )}
+        </View>
+      </View>
+    );
+  };
+
+  return (
+    <SafeAreaView style={SharedStyles.safeArea}>
+      <FlatList
+        data={complaints}
+        keyExtractor={(item) => item._id}
+        renderItem={renderComplaintCard}
+        ListHeaderComponent={renderHeader}
+        contentContainerStyle={styles.listContainer}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => { setRefreshing(true); loadData(); }}
+            tintColor={Colors.primary}
+            colors={[Colors.primary]}
+          />
+        }
+        ListEmptyComponent={
+          !loading && (
+            <View style={styles.emptyContainer}>
+              <View style={styles.emptyIconCircle}>
+                <Ionicons name="shield-checkmark-outline" size={40} color={Colors.textMuted} />
+              </View>
+              <Text style={styles.emptyTitle}>All Good!</Text>
+              <Text style={styles.emptySubtitle}>No complaints found in your records.</Text>
+            </View>
+          )
+        }
       />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.background },
-  headerWrap: { paddingHorizontal: 16, paddingTop: 16 },
-  topRow: { flexDirection: "row", alignItems: "center", marginBottom: 16 },
-  title: { fontSize: 26, fontWeight: "800", color: C.text },
+  header: { paddingHorizontal: Spacing.lg, paddingTop: Spacing.lg },
+  headerTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: Spacing.sm },
   refreshBtn: {
-    marginLeft: "auto", width: 40, height: 40, borderRadius: 20,
-    backgroundColor: C.card, borderWidth: 1, borderColor: C.border,
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: Colors.surfaceCard, borderWidth: 1, borderColor: Colors.border,
     alignItems: "center", justifyContent: "center",
   },
-  list: { paddingHorizontal: 16, paddingBottom: 24, gap: 12 },
-  card: {
-    backgroundColor: C.card, borderRadius: 16, padding: 16,
-    borderWidth: 1, borderColor: C.border, marginBottom: 12,
+  listContainer: { paddingBottom: Spacing.xxxl },
+
+  formCard: { padding: 0, overflow: "hidden", marginTop: Spacing.sm },
+  formHeader: {
+    flexDirection: "row", justifyContent: "space-between", alignItems: "center",
+    padding: Spacing.lg, backgroundColor: "rgba(255, 107, 0, 0.03)"
   },
-  cardTitle: {
-    fontSize: 14, fontWeight: "700", color: C.primary,
-    textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 16,
+  formTitleRow: { flexDirection: "row", alignItems: "center" },
+  formTitle: { fontSize: FontSize.md, fontWeight: FontWeight.bold, color: Colors.textPrimary, marginLeft: Spacing.sm },
+  formContent: { padding: Spacing.lg, paddingTop: 0 },
+  divider: { height: 1, backgroundColor: Colors.divider, marginBottom: Spacing.md },
+  fieldGroup: { marginBottom: Spacing.md },
+  pillScroll: { marginTop: Spacing.xs },
+  pillContent: { flexDirection: "row", alignItems: "center" },
+  priorityGrid: { flexDirection: "row", gap: Spacing.xs, marginTop: Spacing.xs },
+  priorityPill: { flex: 1, marginRight: 0, alignItems: "center" },
+  input: { marginTop: Spacing.xs },
+  textArea: { minHeight: 100, textAlignVertical: "top" },
+  errorText: { color: Colors.error, fontSize: FontSize.sm, textAlign: "center", marginBottom: Spacing.md },
+
+  targetBanner: {
+    flexDirection: "row", alignItems: "center", backgroundColor: Colors.surfaceInput,
+    padding: Spacing.md, borderRadius: Radius.md, borderWidth: 1, borderColor: Colors.border,
+    marginBottom: Spacing.lg,
   },
-  itemTitle: { fontSize: 16, fontWeight: "700", color: C.text, marginBottom: 6 },
-  label: {
-    fontSize: 11, fontWeight: "600", color: C.textSec,
-    textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4, marginTop: 12,
+  targetIconBox: {
+    width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.errorSurface,
+    alignItems: "center", justifyContent: "center", marginRight: Spacing.md
   },
-  input: {
-    borderWidth: 1, borderColor: C.border, borderRadius: 12,
-    paddingHorizontal: 16, paddingVertical: 12,
-    backgroundColor: C.input, color: C.text, fontSize: 15, minHeight: 50,
+  targetLabel: { fontSize: FontSize.xs, fontWeight: FontWeight.extrabold, color: Colors.error, letterSpacing: 1 },
+  targetName: { fontSize: FontSize.md, fontWeight: FontWeight.bold, color: Colors.textPrimary },
+  targetSub: { fontSize: FontSize.sm, color: Colors.textSecondary },
+  clearBtn: { padding: Spacing.xs },
+
+  complaintCard: {
+    marginHorizontal: Spacing.lg, paddingLeft: Spacing.lg + 4,
+    position: "relative", overflow: "hidden"
   },
-  textArea: { minHeight: 80, textAlignVertical: "top" },
-  pillRow: { marginTop: 8, marginBottom: 8 },
-  pill: {
-    paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999,
-    borderWidth: 1, borderColor: C.border, marginRight: 8, backgroundColor: C.card,
+  priorityTag: {
+    position: "absolute", left: 0, top: 0, bottom: 0, width: 4
   },
-  pillActive: { backgroundColor: C.primary, borderColor: C.primary },
-  pillText: { color: C.textSec, fontSize: 12, fontWeight: "600" },
-  pillTextActive: { color: "#fff" },
-  primaryBtn: {
-    marginTop: 16, backgroundColor: C.primary, borderRadius: 12,
-    minHeight: 52, alignItems: "center", justifyContent: "center",
+  cardHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: Spacing.sm },
+  itemTitle: { fontSize: FontSize.md, fontWeight: FontWeight.bold, color: Colors.textPrimary },
+  categoryText: { fontSize: FontSize.xs, color: Colors.primary, fontWeight: FontWeight.semibold, marginTop: 2 },
+  itemDescription: { fontSize: FontSize.base, color: Colors.textSecondary, lineHeight: 22, marginBottom: Spacing.lg },
+
+  cardFooter: { borderTopWidth: 1, borderTopColor: Colors.divider, paddingTop: Spacing.md },
+  metaRow: { gap: Spacing.xs, marginBottom: Spacing.sm },
+  metaItem: { flexDirection: "row", alignItems: "center" },
+  metaLabel: { fontSize: FontSize.xs, color: Colors.textMuted, marginLeft: Spacing.xs },
+  metaValue: { fontSize: FontSize.xs, color: Colors.textSecondary, fontWeight: FontWeight.medium, flex: 1 },
+  dateRow: { flexDirection: "row", alignItems: "center", alignSelf: "flex-end" },
+  dateText: { fontSize: FontSize.xs, color: Colors.textMuted, marginLeft: 4 },
+
+  cardActions: { marginTop: Spacing.md },
+  adminActions: { flexDirection: "row", gap: Spacing.sm },
+  actionBtn: {
+    flexDirection: "row", alignItems: "center", justifyContent: "center",
+    backgroundColor: Colors.surfaceInput, borderRadius: Radius.sm,
+    paddingVertical: 8, paddingHorizontal: Spacing.md, borderWidth: 1, borderColor: Colors.border
   },
-  primaryBtnText: { color: "#fff", fontWeight: "700", fontSize: 16 },
-  actionRow: { flexDirection: "row", gap: 8, marginTop: 12 },
-  smallBtn: {
-    backgroundColor: C.primarySurface, paddingHorizontal: 12,
-    paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: C.primaryBorder,
+  resolveBtn: { flex: 1, backgroundColor: Colors.successSurface, borderColor: Colors.success + "40" },
+  rejectBtn: { flex: 1, backgroundColor: Colors.errorSurface, borderColor: Colors.error + "40" },
+  actionBtnText: { fontSize: FontSize.xs, fontWeight: FontWeight.bold, marginLeft: 6 },
+
+  emptyContainer: { alignItems: "center", justifyContent: "center", paddingVertical: 60 },
+  emptyIconCircle: {
+    width: 80, height: 80, borderRadius: 40, backgroundColor: Colors.surfaceCard,
+    alignItems: "center", justifyContent: "center", marginBottom: Spacing.md,
+    borderWidth: 1, borderColor: Colors.border
   },
-  deleteBtn: { backgroundColor: C.errorSurf, borderColor: C.error },
-  smallBtnText: { color: C.primary, fontWeight: "700", fontSize: 12 },
-  meta: { color: C.textSec, marginBottom: 4, fontSize: 12 },
-  helper: { color: C.textMut, marginBottom: 8, fontSize: 13, textAlign: "center" },
-  error: { color: C.error, marginBottom: 8, fontSize: 13, textAlign: "center" },
-  targetInfo: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: C.input,
-    padding: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: C.border,
-    marginBottom: 8,
-  },
-  targetIcon: { marginRight: 12 },
-  targetLabel: { fontSize: 10, fontWeight: "800", letterSpacing: 1 },
-  targetName: { fontSize: 16, fontWeight: "700", color: C.text },
-  targetSub: { fontSize: 13, color: C.textSec },
-  clearBtn: { padding: 4 },
-  description: { fontSize: 14, color: C.textSec, lineHeight: 20 },
+  emptyTitle: { fontSize: FontSize.lg, fontWeight: FontWeight.bold, color: Colors.textPrimary },
+  emptySubtitle: { fontSize: FontSize.base, color: Colors.textMuted, textAlign: "center", marginTop: Spacing.xs },
 });

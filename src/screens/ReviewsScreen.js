@@ -8,11 +8,13 @@ import {
   Text,
   View,
   ActivityIndicator,
+  RefreshControl,
 } from "react-native";
 import { useRoute } from "@react-navigation/native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import ThemedInput from "../components/ThemedInput";
 import { useAuth } from "../context/AuthContext";
+import { Colors, Spacing, FontSize, FontWeight, Radius, SharedStyles, Shadow } from "../theme";
 import {
   createReview,
   deleteReview,
@@ -20,22 +22,6 @@ import {
   getMyReviews,
   updateReview,
 } from "../services/apiClient";
-
-const C = {
-  primary: "#FF6B00",
-  primarySurface: "rgba(255, 107, 0, 0.1)",
-  primaryBorder: "rgba(255, 107, 0, 0.2)",
-  card: "#1E1E1E",
-  background: "#121212",
-  border: "#333",
-  input: "#252525",
-  text: "#FFFFFF",
-  textSec: "#B0B0B0",
-  textMut: "#666666",
-  error: "#FF4D4D",
-  errorSurf: "rgba(255, 77, 77, 0.1)",
-  success: "#4CAF50",
-};
 
 const INITIAL_FORM = {
   booking: "",
@@ -47,16 +33,20 @@ const INITIAL_FORM = {
   reviewText: "",
 };
 
-function StarRating({ rating, onRatingChange, size = 28 }) {
+function StarRating({ rating, onRatingChange, size = 28, readOnly = false }) {
   return (
     <View style={styles.starsContainer}>
       {[1, 2, 3, 4, 5].map((s) => (
-        <Pressable key={s} onPress={() => onRatingChange && onRatingChange(s)}>
-          <Ionicons 
-            name={s <= rating ? "star" : "star-outline"} 
-            size={size} 
-            color={s <= rating ? "#FFD700" : C.textMut} 
-            style={{ marginRight: 6 }}
+        <Pressable
+          key={s}
+          onPress={() => !readOnly && onRatingChange && onRatingChange(s)}
+          style={({ pressed }) => [!readOnly && pressed && { opacity: 0.7 }]}
+        >
+          <Ionicons
+            name={s <= rating ? "star" : "star-outline"}
+            size={size}
+            color={s <= rating ? "#FFD700" : Colors.textMuted}
+            style={{ marginRight: 4 }}
           />
         </Pressable>
       ))}
@@ -70,10 +60,12 @@ export default function ReviewsScreen() {
   const [reviews, setReviews] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
   const [actionError, setActionError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [editingId, setEditingId] = useState("");
+  const [showForm, setShowForm] = useState(false);
 
   const [form, setForm] = useState(INITIAL_FORM);
 
@@ -94,6 +86,7 @@ export default function ReviewsScreen() {
       setError(e.message || "Failed to load reviews");
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }, [token, bookingsRole]);
 
@@ -111,6 +104,7 @@ export default function ReviewsScreen() {
         job: route.params.jobId || "",
         jobTitle: route.params.jobTitle || ""
       }));
+      setShowForm(true);
     }
   }, [route.params]);
 
@@ -134,6 +128,7 @@ export default function ReviewsScreen() {
   function resetForm() {
     setForm(INITIAL_FORM);
     setEditingId("");
+    setShowForm(false);
   }
 
   function useBooking(booking) {
@@ -147,6 +142,7 @@ export default function ReviewsScreen() {
 
   function startEdit(review) {
     setEditingId(review._id);
+    setShowForm(true);
     setActionError("");
     setForm({
       booking: review.booking?._id || review.booking || "",
@@ -174,7 +170,7 @@ export default function ReviewsScreen() {
         });
       } else {
         if (!form.booking || !form.reviewee || !form.reviewText) {
-          setActionError("All fields are required");
+          setActionError("Please complete all fields");
           return;
         }
 
@@ -207,216 +203,305 @@ export default function ReviewsScreen() {
     }
   }
 
-  return (
-    <SafeAreaView style={styles.container}>
-      <FlatList
-        data={reviews}
-        keyExtractor={(item) => item._id}
-        contentContainerStyle={styles.list}
-        ListHeaderComponent={
-          <ScrollView style={styles.headerWrap}>
-            <View style={styles.topRow}>
-              <Text style={styles.title}>Reviews</Text>
-              <Pressable style={styles.refreshBtn} onPress={loadData}>
-                <Ionicons name="refresh" size={20} color={C.text} />
-              </Pressable>
+  const renderHeader = () => (
+    <View style={styles.header}>
+      <View style={styles.headerTop}>
+        <View>
+          <Text style={SharedStyles.screenTitle}>Reviews</Text>
+          <Text style={SharedStyles.screenSubtitle}>Your professional feedback history</Text>
+        </View>
+        <Pressable
+          style={({ pressed }) => [styles.refreshBtn, pressed && { opacity: 0.7 }]}
+          onPress={() => { setRefreshing(true); loadData(); }}
+        >
+          <Ionicons name="refresh" size={20} color={Colors.textPrimary} />
+        </Pressable>
+      </View>
+
+      {user?.role !== "admin" && (
+        <View style={[SharedStyles.card, styles.formCard]}>
+          <Pressable
+            style={styles.formHeader}
+            onPress={() => setShowForm(!showForm)}
+          >
+            <View style={styles.formTitleRow}>
+              <Ionicons
+                name={editingId ? "create-outline" : "star-outline"}
+                size={22}
+                color={Colors.primary}
+              />
+              <Text style={styles.formTitle}>{editingId ? "Edit Your Review" : "Write a Review"}</Text>
             </View>
+            <Ionicons
+              name={showForm ? "chevron-up" : "chevron-down"}
+              size={20}
+              color={Colors.textMuted}
+            />
+          </Pressable>
 
-            {user?.role !== "admin" && (
-              <View style={styles.card}>
-                <Text style={styles.cardTitle}>{editingId ? "Edit Review" : "Create Review"}</Text>
+          {showForm && (
+            <View style={styles.formContent}>
+              <View style={styles.divider} />
 
-                {form.revieweeName || form.jobTitle ? (
-                  <View style={styles.targetInfo}>
-                    <View style={styles.targetIcon}>
-                      <Ionicons name="person-circle-outline" size={40} color={C.primary} />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.targetLabel}>REVIEWING</Text>
-                      <Text style={styles.targetName}>{form.revieweeName || "Professional"}</Text>
-                      {form.jobTitle && <Text style={styles.targetSub}>{form.jobTitle}</Text>}
-                    </View>
-                    {!editingId && (
-                      <Pressable onPress={resetForm} style={styles.clearBtn}>
-                        <Ionicons name="close-circle" size={20} color={C.textMut} />
-                      </Pressable>
-                    )}
+              {form.revieweeName || form.jobTitle ? (
+                <View style={styles.targetBanner}>
+                  <View style={styles.targetIconBox}>
+                    <Ionicons name="person-circle" size={32} color={Colors.primary} />
                   </View>
-                ) : (
-                  <>
-                    <Text style={styles.label}>Select Booking</Text>
-                    {!editingId ? (
-                      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillRow}>
-                        {bookings.length > 0 ? (
-                          bookings.slice(0, 12).map((booking) => (
-                            <Pressable
-                              key={booking._id}
-                              style={[styles.pill, form.booking === booking._id && styles.pillActive]}
-                              onPress={() => useBooking(booking)}
-                            >
-                              <Text style={[styles.pillText, form.booking === booking._id && styles.pillTextActive]}>
-                                {booking.job?.jobTitle || "Booking"} - {new Date(booking.scheduledDate || booking.createdAt).toLocaleDateString()}
-                              </Text>
-                            </Pressable>
-                          ))
-                        ) : (
-                          <Text style={styles.helper}>No recent bookings found</Text>
-                        )}
-                      </ScrollView>
-                    ) : null}
-                  </>
-                )}
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.targetLabel}>YOU ARE REVIEWING</Text>
+                    <Text style={styles.targetName}>{form.revieweeName || "Professional"}</Text>
+                    {form.jobTitle && <Text style={styles.targetSub}>{form.jobTitle}</Text>}
+                  </View>
+                  {!editingId && (
+                    <Pressable onPress={() => setForm(INITIAL_FORM)} style={styles.clearBtn}>
+                      <Ionicons name="close-circle" size={24} color={Colors.textMuted} />
+                    </Pressable>
+                  )}
+                </View>
+              ) : (
+                <View style={styles.fieldGroup}>
+                  <Text style={SharedStyles.label}>Select Recent Booking</Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillScroll}>
+                    {bookings.length > 0 ? (
+                      bookings.slice(0, 12).map((booking) => (
+                        <Pressable
+                          key={booking._id}
+                          style={[SharedStyles.pill, form.booking === booking._id && SharedStyles.pillActive]}
+                          onPress={() => useBooking(booking)}
+                        >
+                          <Text style={[SharedStyles.pillText, form.booking === booking._id && SharedStyles.pillTextActive]}>
+                            {booking.job?.jobTitle || "Job"} • {new Date(booking.scheduledDate || booking.createdAt).toLocaleDateString()}
+                          </Text>
+                        </Pressable>
+                      ))
+                    ) : (
+                      <Text style={styles.emptySmall}>No recent bookings to review</Text>
+                    )}
+                  </ScrollView>
+                </View>
+              )}
 
-                <Text style={styles.label}>Overall Rating</Text>
-                <StarRating 
-                  rating={form.rating} 
-                  onRatingChange={(r) => updateForm("rating", r)} 
-                />
+              <View style={styles.fieldGroup}>
+                <Text style={SharedStyles.label}>Overall Rating</Text>
+                <View style={styles.starsWrapper}>
+                  <StarRating
+                    rating={form.rating}
+                    onRatingChange={(r) => updateForm("rating", r)}
+                  />
+                  <Text style={styles.ratingText}>{form.rating}/5 Stars</Text>
+                </View>
+              </View>
 
-                <Text style={styles.label}>Review Message</Text>
+              <View style={styles.fieldGroup}>
+                <Text style={SharedStyles.label}>Your Message</Text>
                 <ThemedInput
                   style={[styles.input, styles.textArea]}
-                  placeholder="Share your experience..."
+                  placeholder="Tell others about your experience..."
                   multiline
                   numberOfLines={4}
                   value={form.reviewText}
                   onChangeText={(value) => updateForm("reviewText", value)}
                 />
+              </View>
 
-                {actionError ? <Text style={styles.error}>{actionError}</Text> : null}
+              {actionError ? <Text style={styles.errorText}>{actionError}</Text> : null}
 
+              <View style={styles.formActions}>
                 <Pressable
-                  style={[styles.primaryBtn, submitting && { opacity: 0.7 }]}
+                  style={[SharedStyles.primaryButton, styles.submitBtn, submitting && { opacity: 0.7 }]}
                   onPress={submitReview}
                   disabled={submitting}
                 >
                   {submitting ? (
-                    <ActivityIndicator color="#fff" size="small" />
+                    <ActivityIndicator color={Colors.textOnPrimary} size="small" />
                   ) : (
-                    <Text style={styles.primaryBtnText}>{editingId ? "Update Review" : "Submit Review"}</Text>
+                    <Text style={SharedStyles.primaryButtonText}>
+                      {editingId ? "Save Changes" : "Post Review"}
+                    </Text>
                   )}
                 </Pressable>
 
                 {editingId && (
                   <Pressable style={styles.cancelBtn} onPress={resetForm}>
-                    <Text style={styles.cancelBtnText}>Cancel Editing</Text>
+                    <Text style={styles.cancelBtnText}>Cancel</Text>
                   </Pressable>
                 )}
               </View>
-            )}
-
-            {error ? <Text style={styles.error}>{error}</Text> : null}
-            {loading ? <Text style={styles.helper}>Loading reviews...</Text> : null}
-          </ScrollView>
-        }
-        ListEmptyComponent={!loading ? <Text style={styles.helper}>No reviews found.</Text> : null}
-        renderItem={({ item }) => (
-          <View style={styles.card}>
-            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
-              <View>
-                <Text style={styles.itemTitle}>
-                  {reviewerType === "worker" 
-                    ? `From: ${item.reviewer?.firstName || "Customer"}`
-                    : `For: ${item.reviewee?.firstName || "Professional"}`}
-                </Text>
-                <StarRating rating={item.overallRating || item.rating} size={16} />
-              </View>
-              <Text style={styles.meta}>{new Date(item.createdAt).toLocaleDateString()}</Text>
             </View>
-            
-            <Text style={styles.description}>{item.reviewText}</Text>
-            
-            {(item.reviewer?._id === user?.userId || item.reviewer === user?.userId) && (
-              <View style={styles.actionRow}>
-                <Pressable style={styles.smallBtn} onPress={() => startEdit(item)}>
-                  <Text style={styles.smallBtnText}>Edit</Text>
-                </Pressable>
-                <Pressable style={[styles.smallBtn, styles.deleteBtn]} onPress={() => handleDelete(item._id)}>
-                  <Text style={[styles.smallBtnText, { color: C.error }]}>Delete</Text>
-                </Pressable>
-              </View>
-            )}
+          )}
+        </View>
+      )}
+
+      {reviews.length > 0 && (
+        <Text style={[SharedStyles.sectionTitle, { marginTop: Spacing.lg }]}>Recent Activity</Text>
+      )}
+    </View>
+  );
+
+  const renderReviewCard = ({ item }) => {
+    const isMine = (item.reviewer?._id || item.reviewer) === user?.userId;
+
+    return (
+      <View style={[SharedStyles.card, styles.reviewCard]}>
+        <View style={styles.cardHeader}>
+          <View style={styles.userInfo}>
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>
+                {(reviewerType === "worker" ? (item.reviewer?.firstName?.[0] || "C") : (item.reviewee?.firstName?.[0] || "P"))}
+              </Text>
+            </View>
+            <View>
+              <Text style={styles.itemTitle}>
+                {reviewerType === "worker"
+                  ? `${item.reviewer?.firstName || "Customer"}`
+                  : `${item.reviewee?.firstName || "Professional"}`}
+              </Text>
+              <StarRating rating={item.overallRating || item.rating} size={14} readOnly />
+            </View>
+          </View>
+          <View style={styles.dateBox}>
+            <Ionicons name="calendar-outline" size={12} color={Colors.textMuted} />
+            <Text style={styles.dateText}>{new Date(item.createdAt).toLocaleDateString()}</Text>
+          </View>
+        </View>
+
+        <Text style={styles.reviewContent}>{item.reviewText}</Text>
+
+        {isMine && (
+          <View style={styles.cardActions}>
+            <Pressable style={styles.actionBtn} onPress={() => startEdit(item)}>
+              <Ionicons name="pencil-outline" size={14} color={Colors.primary} />
+              <Text style={[styles.actionBtnText, { color: Colors.primary }]}>Edit</Text>
+            </Pressable>
+            <Pressable style={[styles.actionBtn, styles.deleteBtn]} onPress={() => handleDelete(item._id)}>
+              <Ionicons name="trash-outline" size={14} color={Colors.error} />
+              <Text style={[styles.actionBtnText, { color: Colors.error }]}>Delete</Text>
+            </Pressable>
           </View>
         )}
+      </View>
+    );
+  };
+
+  return (
+    <SafeAreaView style={SharedStyles.safeArea}>
+      <FlatList
+        data={reviews}
+        keyExtractor={(item) => item._id}
+        renderItem={renderReviewCard}
+        ListHeaderComponent={renderHeader}
+        contentContainerStyle={styles.listContainer}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => { setRefreshing(true); loadData(); }}
+            tintColor={Colors.primary}
+            colors={[Colors.primary]}
+          />
+        }
+        ListEmptyComponent={
+          !loading && (
+            <View style={styles.emptyContainer}>
+              <View style={styles.emptyIconCircle}>
+                <Ionicons name="chatbox-outline" size={40} color={Colors.textMuted} />
+              </View>
+              <Text style={styles.emptyTitle}>No Reviews Yet</Text>
+              <Text style={styles.emptySubtitle}>Your feedback history will appear here.</Text>
+            </View>
+          )
+        }
       />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.background },
-  headerWrap: { paddingHorizontal: 16, paddingTop: 16 },
-  topRow: { flexDirection: "row", alignItems: "center", marginBottom: 16 },
-  title: { fontSize: 26, fontWeight: "800", color: C.text },
+  header: { paddingHorizontal: Spacing.lg, paddingTop: Spacing.lg },
+  headerTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: Spacing.sm },
   refreshBtn: {
-    marginLeft: "auto", width: 40, height: 40, borderRadius: 20,
-    backgroundColor: C.card, borderWidth: 1, borderColor: C.border,
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: Colors.surfaceCard, borderWidth: 1, borderColor: Colors.border,
     alignItems: "center", justifyContent: "center",
   },
-  list: { paddingHorizontal: 16, paddingBottom: 24, gap: 12 },
-  card: {
-    backgroundColor: C.card, borderRadius: 16, padding: 16,
-    borderWidth: 1, borderColor: C.border, marginBottom: 12,
+  listContainer: { paddingBottom: Spacing.xxxl },
+
+  formCard: { padding: 0, overflow: "hidden", marginTop: Spacing.sm },
+  formHeader: {
+    flexDirection: "row", justifyContent: "space-between", alignItems: "center",
+    padding: Spacing.lg, backgroundColor: "rgba(255, 107, 0, 0.03)"
   },
-  cardTitle: {
-    fontSize: 14, fontWeight: "700", color: C.primary,
-    textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 16,
+  formTitleRow: { flexDirection: "row", alignItems: "center" },
+  formTitle: { fontSize: FontSize.md, fontWeight: FontWeight.bold, color: Colors.textPrimary, marginLeft: Spacing.sm },
+  formContent: { padding: Spacing.lg, paddingTop: 0 },
+  divider: { height: 1, backgroundColor: Colors.divider, marginBottom: Spacing.md },
+  fieldGroup: { marginBottom: Spacing.md },
+  pillScroll: { marginTop: Spacing.xs },
+  emptySmall: { fontSize: FontSize.sm, color: Colors.textMuted, marginTop: Spacing.xs },
+
+  starsWrapper: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: Spacing.xs },
+  starsContainer: { flexDirection: "row" },
+  ratingText: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, color: Colors.warning },
+
+  input: { marginTop: Spacing.xs },
+  textArea: { minHeight: 100, textAlignVertical: "top" },
+  errorText: { color: Colors.error, fontSize: FontSize.sm, textAlign: "center", marginBottom: Spacing.md },
+
+  targetBanner: {
+    flexDirection: "row", alignItems: "center", backgroundColor: Colors.surfaceInput,
+    padding: Spacing.md, borderRadius: Radius.md, borderWidth: 1, borderColor: Colors.border,
+    marginBottom: Spacing.lg,
   },
-  itemTitle: { fontSize: 16, fontWeight: "700", color: C.text, marginBottom: 6 },
-  label: {
-    fontSize: 11, fontWeight: "600", color: C.textSec,
-    textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4, marginTop: 12,
+  targetIconBox: {
+    width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.primarySurface,
+    alignItems: "center", justifyContent: "center", marginRight: Spacing.md
   },
-  input: {
-    borderWidth: 1, borderColor: C.border, borderRadius: 12,
-    paddingHorizontal: 16, paddingVertical: 12,
-    backgroundColor: C.input, color: C.text, fontSize: 15, minHeight: 50,
-  },
-  textArea: { minHeight: 80, textAlignVertical: "top" },
-  pillRow: { marginTop: 8, marginBottom: 8 },
-  pill: {
-    paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999,
-    borderWidth: 1, borderColor: C.border, marginRight: 8, backgroundColor: C.card,
-  },
-  pillActive: { backgroundColor: C.primary, borderColor: C.primary },
-  pillText: { color: C.textSec, fontSize: 12, fontWeight: "600" },
-  pillTextActive: { color: "#fff" },
-  primaryBtn: {
-    marginTop: 16, backgroundColor: C.primary, borderRadius: 12,
-    minHeight: 52, alignItems: "center", justifyContent: "center",
-  },
-  primaryBtnText: { color: "#fff", fontWeight: "700", fontSize: 16 },
+  targetLabel: { fontSize: FontSize.xs, fontWeight: FontWeight.extrabold, color: Colors.primary, letterSpacing: 1 },
+  targetName: { fontSize: FontSize.md, fontWeight: FontWeight.bold, color: Colors.textPrimary },
+  targetSub: { fontSize: FontSize.sm, color: Colors.textSecondary },
+  clearBtn: { padding: Spacing.xs },
+
+  formActions: { gap: Spacing.sm },
+  submitBtn: { flex: 1 },
   cancelBtn: {
-    marginTop: 8, borderRadius: 12, minHeight: 44,
-    alignItems: "center", justifyContent: "center",
-    borderWidth: 1, borderColor: C.border,
+    height: 44, alignItems: "center", justifyContent: "center",
+    borderWidth: 1, borderColor: Colors.border, borderRadius: Radius.md
   },
-  cancelBtnText: { color: C.textSec, fontWeight: "600", fontSize: 14 },
-  actionRow: { flexDirection: "row", gap: 8, marginTop: 12 },
-  smallBtn: {
-    backgroundColor: C.primarySurface, paddingHorizontal: 12,
-    paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: C.primaryBorder,
+  cancelBtnText: { color: Colors.textSecondary, fontWeight: FontWeight.semibold },
+
+  reviewCard: { marginHorizontal: Spacing.lg },
+  cardHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: Spacing.md },
+  userInfo: { flexDirection: "row", alignItems: "center", flex: 1 },
+  avatar: {
+    width: 36, height: 36, borderRadius: 18, backgroundColor: Colors.surfaceInput,
+    alignItems: "center", justifyContent: "center", marginRight: Spacing.md,
+    borderWidth: 1, borderColor: Colors.border
   },
-  deleteBtn: { backgroundColor: C.errorSurf, borderColor: C.error },
-  smallBtnText: { color: C.primary, fontWeight: "700", fontSize: 12 },
-  meta: { color: C.textSec, marginBottom: 4, fontSize: 13 },
-  helper: { color: C.textMut, marginBottom: 8, fontSize: 13, textAlign: "center" },
-  error: { color: C.error, marginBottom: 8, fontSize: 13, textAlign: "center" },
-  starsContainer: { flexDirection: "row", marginVertical: 8 },
-  targetInfo: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: C.input,
-    padding: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: C.border,
-    marginBottom: 8,
+  avatarText: { fontSize: FontSize.base, fontWeight: FontWeight.bold, color: Colors.primary },
+  itemTitle: { fontSize: FontSize.md, fontWeight: FontWeight.bold, color: Colors.textPrimary },
+  dateBox: { flexDirection: "row", alignItems: "center" },
+  dateText: { fontSize: FontSize.xs, color: Colors.textMuted, marginLeft: 4 },
+  reviewContent: { fontSize: FontSize.base, color: Colors.textSecondary, lineHeight: 22, marginBottom: Spacing.md },
+
+  cardActions: {
+    flexDirection: "row", gap: Spacing.sm, borderTopWidth: 1,
+    borderTopColor: Colors.divider, paddingTop: Spacing.md
   },
-  targetIcon: { marginRight: 12 },
-  targetLabel: { fontSize: 10, fontWeight: "800", letterSpacing: 1 },
-  targetName: { fontSize: 16, fontWeight: "700", color: C.text },
-  targetSub: { fontSize: 13, color: C.textSec },
-  clearBtn: { padding: 4 },
-  description: { fontSize: 14, color: C.textSec, lineHeight: 20, marginTop: 8 },
+  actionBtn: {
+    flexDirection: "row", alignItems: "center", justifyContent: "center",
+    backgroundColor: Colors.surfaceInput, borderRadius: Radius.sm,
+    paddingVertical: 6, paddingHorizontal: Spacing.md, borderWidth: 1, borderColor: Colors.border,
+    flex: 1
+  },
+  deleteBtn: { backgroundColor: Colors.errorSurface, borderColor: Colors.error + "40" },
+  actionBtnText: { fontSize: FontSize.xs, fontWeight: FontWeight.bold, marginLeft: 6 },
+
+  emptyContainer: { alignItems: "center", justifyContent: "center", paddingVertical: 60 },
+  emptyIconCircle: {
+    width: 80, height: 80, borderRadius: 40, backgroundColor: Colors.surfaceCard,
+    alignItems: "center", justifyContent: "center", marginBottom: Spacing.md,
+    borderWidth: 1, borderColor: Colors.border
+  },
+  emptyTitle: { fontSize: FontSize.lg, fontWeight: FontWeight.bold, color: Colors.textPrimary },
+  emptySubtitle: { fontSize: FontSize.base, color: Colors.textMuted, textAlign: "center", marginTop: Spacing.xs },
 });

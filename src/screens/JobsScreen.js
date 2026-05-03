@@ -63,7 +63,7 @@ function JobCard({ item, onEdit, onDelete, onPress, currentUserId }) {
         <View style={styles.budgetBadge}>
           <Text style={styles.budgetText}>Rs. {item.budgetMin} – {item.budgetMax}</Text>
         </View>
-        
+
         {isOwner && (
           <View style={styles.ownerActions}>
             <Pressable style={styles.editBtn} onPress={() => onEdit(item)}>
@@ -242,22 +242,24 @@ export default function JobsScreen({ navigation }) {
             {/* ── Module Grid ──────────── */}
             <Text style={styles.sectionTitle}>Quick Access</Text>
             <View style={styles.moduleGrid}>
-              {QUICK_MODULES.map((m) => (
-                <Pressable
-                  key={m.name}
-                  style={({ pressed }) => [styles.moduleCard, pressed && styles.moduleCardPressed]}
-                  onPress={() => navigation.navigate(m.screen)}
-                  accessibilityLabel={`Navigate to ${m.name}`}
-                  accessibilityRole="button"
-                >
-                  <Text style={styles.moduleIcon}>{m.icon}</Text>
-                  <Text style={styles.moduleTitle}>{m.name}</Text>
-                  <Text style={styles.moduleSub}>{m.desc}</Text>
-                  <View style={styles.moduleArrow}>
-                    <Text style={styles.moduleArrowText}>›</Text>
-                  </View>
-                </Pressable>
-              ))}
+              {QUICK_MODULES
+                .filter(m => !(user?.role === "admin" && m.name === "Complaints"))
+                .map((m) => (
+                  <Pressable
+                    key={m.name}
+                    style={({ pressed }) => [styles.moduleCard, pressed && styles.moduleCardPressed]}
+                    onPress={() => navigation.navigate(m.screen)}
+                    accessibilityLabel={`Navigate to ${m.name}`}
+                    accessibilityRole="button"
+                  >
+                    <Text style={styles.moduleIcon}>{m.icon}</Text>
+                    <Text style={styles.moduleTitle}>{m.name}</Text>
+                    <Text style={styles.moduleSub}>{m.desc}</Text>
+                    <View style={styles.moduleArrow}>
+                      <Text style={styles.moduleArrowText}>›</Text>
+                    </View>
+                  </Pressable>
+                ))}
               {user?.role === "admin" && (
                 <Pressable
                   style={({ pressed }) => [styles.moduleCard, { borderColor: Colors.primary }, pressed && styles.moduleCardPressed]}
@@ -393,13 +395,13 @@ export default function JobsScreen({ navigation }) {
 
             {/* ── Status Tabs ──────────── */}
             <View style={styles.tabsContainer}>
-              <Pressable 
+              <Pressable
                 style={[styles.tab, activeTab === "active" && styles.activeTab]}
                 onPress={() => setActiveTab("active")}
               >
                 <Text style={[styles.tabText, activeTab === "active" && styles.activeTabText]}>Active Jobs</Text>
               </Pressable>
-              <Pressable 
+              <Pressable
                 style={[styles.tab, activeTab === "history" && styles.activeTab]}
                 onPress={() => setActiveTab("history")}
               >
@@ -420,18 +422,18 @@ export default function JobsScreen({ navigation }) {
               <Text style={styles.emptyIcon}>💼</Text>
               <Text style={styles.emptyTitle}>{activeTab === "active" ? "No Active Jobs" : "No Job History"}</Text>
               <Text style={styles.emptyDesc}>
-                {activeTab === "active" 
-                  ? "Check back later for new opportunities." 
+                {activeTab === "active"
+                  ? "Check back later for new opportunities."
                   : "Your past jobs will appear here once completed or cancelled."}
               </Text>
             </View>
           ) : null
         }
         renderItem={({ item }) => (
-          <JobCard 
-            item={item} 
-            onEdit={handleEdit} 
-            onDelete={handleDelete} 
+          <JobCard
+            item={item}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
             onPress={() => navigation.navigate("JobDetail", { jobId: item._id })}
             currentUserId={user?.userId || user?._id}
           />
