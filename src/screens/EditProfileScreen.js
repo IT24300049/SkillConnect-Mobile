@@ -78,8 +78,15 @@ export default function EditProfileScreen({ navigation }) {
 
     setSaving(true);
     try {
-      const payload = { ...form };
-      if (form.hourlyRate) payload.hourlyRate = parseFloat(form.hourlyRate);
+      const payload = {};
+      // Only send fields that have values to avoid validation errors for empty strings
+      Object.keys(form).forEach(key => {
+        if (form[key] !== "" && form[key] !== null && form[key] !== undefined) {
+          payload[key] = form[key];
+        }
+      });
+
+      if (payload.hourlyRate) payload.hourlyRate = parseFloat(payload.hourlyRate);
       
       await updateProfile(token, payload);
       Alert.alert("Success", "Profile updated successfully!", [

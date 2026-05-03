@@ -19,15 +19,15 @@ const authValidation = {
             .isLength({ min: 2 })
             .withMessage('First name must be at least 2 characters'),
         body('lastName')
-            .optional()
+            .optional({ checkFalsy: true })
             .trim(),
         body('phone')
-            .optional()
+            .optional({ checkFalsy: true })
             .trim()
             .matches(/^\d{10}$/)
             .withMessage('Phone must be exactly 10 digits'),
         body('role')
-            .optional()
+            .optional({ checkFalsy: true })
             .isIn(['customer', 'worker', 'supplier', 'admin'])
             .withMessage('Invalid role')
     ],
@@ -38,12 +38,12 @@ const authValidation = {
             .isLength({ min: 2 })
             .withMessage('First name must be at least 2 characters'),
         body('phone')
-            .optional()
+            .optional({ checkFalsy: true })
             .trim()
             .matches(/^\d{10}$/)
             .withMessage('Phone must be exactly 10 digits'),
         body('hourlyRate')
-            .optional()
+            .optional({ checkFalsy: true })
             .isNumeric()
             .withMessage('Hourly rate must be a number'),
     ],
