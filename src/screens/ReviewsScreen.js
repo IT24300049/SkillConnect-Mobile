@@ -152,12 +152,23 @@ export default function ReviewsScreen() {
     updateForm("booking", booking._id);
     const title = booking.job?.jobTitle || booking.equipment?.name || "Rental";
     updateForm("jobTitle", title);
-    const reviewee = bookingToReviewee.get(booking._id) || "";
-    if (reviewee) {
-      updateForm("reviewee", reviewee);
-      const revieweeObj = booking.customer || booking.worker || booking.assignedWorker;
+    
+    const revieweeId = bookingToReviewee.get(booking._id) || "";
+    if (revieweeId) {
+      updateForm("reviewee", revieweeId);
+      
+      // Correctly pick the reviewee object based on the role
+      let revieweeObj;
+      if (user?.role === "supplier" || reviewerType === "worker") {
+        revieweeObj = booking.customer;
+      } else {
+        revieweeObj = booking.assignedWorker || booking.worker;
+      }
+
       if (revieweeObj?.firstName) {
-        updateForm("revieweeName", `${revieweeObj.firstName} ${revieweeObj.lastName || ""}`);
+        updateForm("revieweeName", `${revieweeObj.firstName} ${revieweeObj.lastName || ""}`.trim());
+      } else {
+        updateForm("revieweeName", "Professional");
       }
     }
   }

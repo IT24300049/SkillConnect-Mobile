@@ -202,7 +202,7 @@ const ComplaintForm = ({
 };
 
 const ComplaintCard = ({ item, user, adminMode, handleDelete, handleEdit, handleStatusChange }) => {
-  const mine = !adminMode && (item.complainant?._id || item.complainant) === user?.id;
+  const mine = !adminMode && (item.complainant?._id || item.complainant) === user?.userId;
   const priorityColor = PRIORITIES.find(p => p.id === item.priority)?.color || Colors.textMuted;
 
   return (

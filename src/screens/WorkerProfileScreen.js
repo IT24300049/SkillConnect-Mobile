@@ -44,7 +44,7 @@ export default function WorkerProfileScreen() {
 
   const isVerified = worker.isVerified !== false;
   const getInitials = (f, l) => `${f?.charAt(0) || ""}${l?.charAt(0) || ""}`.toUpperCase();
-  const isSelf = user?.id === worker._id;
+  const isSelf = user?.userId === worker._id;
 
   return (
     <View style={styles.container}>
