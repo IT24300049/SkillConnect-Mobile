@@ -75,12 +75,14 @@ export default function RegisterScreen({ navigation }) {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showSkillPicker, setShowSkillPicker] = useState(false);
 
+  // Real-time password complexity check (Regex-based)
+  // Ensures user meets industry standards before they click register
   const passwordRequirements = {
-    length: form.password.length >= 8,
-    upper: /[A-Z]/.test(form.password),
-    lower: /[a-z]/.test(form.password),
-    number: /[0-9]/.test(form.password),
-    symbol: /[!@#$%^&*(),.?":{}|<>]/.test(form.password),
+    length: form.password.length >= 8, // Min 8 characters
+    upper: /[A-Z]/.test(form.password), // At least one uppercase
+    lower: /[a-z]/.test(form.password), // At least one lowercase
+    number: /[0-9]/.test(form.password), // At least one number
+    symbol: /[!@#$%^&*(),.?":{}|<>]/.test(form.password), // At least one special character
   };
 
   const isPasswordValid = Object.values(passwordRequirements).every(Boolean);

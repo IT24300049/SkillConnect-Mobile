@@ -7,6 +7,9 @@ const authValidation = {
             .isEmail()
             .normalizeEmail()
             .withMessage('Valid email is required'),
+        // Password Validation: 
+        // 1. Minimum 8 characters long
+        // 2. Must contain: 1 lowercase, 1 uppercase, 1 digit, and 1 special symbol (!@# etc.)
         body('password')
             .isLength({ min: 8 })
             .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#^()_+\-=\[\]{};':"\\|,.<>\/?])/)
