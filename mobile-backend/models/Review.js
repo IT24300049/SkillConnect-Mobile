@@ -23,7 +23,7 @@ const reviewSchema = new mongoose.Schema({
     },
     reviewerType: {
         type: String,
-        enum: ['customer', 'worker'],
+        enum: ['customer', 'worker', 'supplier'],
         required: true
     },
     overallRating: {

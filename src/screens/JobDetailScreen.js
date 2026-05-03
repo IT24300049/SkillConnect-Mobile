@@ -163,77 +163,101 @@ export default function JobDetailScreen() {
         <View style={{ width: 28 }} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.card}>
+      <ScrollView 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        <View style={styles.heroSection}>
+          <View style={styles.urgencyRow}>
+            <View style={styles.categoryBadge}>
+              <Text style={styles.categoryBadgeText}>{job.category}</Text>
+            </View>
+            {job.urgencyLevel === "emergency" && (
+              <View style={[styles.statusTag, { backgroundColor: "#450a0a" }]}>
+                <View style={[styles.statusDot, { backgroundColor: "#ef4444" }]} />
+                <Text style={[styles.statusTagText, { color: "#fca5a5" }]}>Emergency</Text>
+              </View>
+            )}
+          </View>
+          
           <Text style={styles.title}>{job.jobTitle}</Text>
-          <View style={styles.tagsContainer}>
-            <View style={styles.tag}><Text style={styles.tagText}>{job.category}</Text></View>
-            <View style={styles.tag}><Text style={styles.tagText}>{job.district}</Text></View>
-            <View style={styles.tag}><Text style={styles.tagText}>{job.urgencyLevel}</Text></View>
+          <View style={styles.locationSnippet}>
+            <Ionicons name="location-sharp" size={14} color={Colors.textMuted} />
+            <Text style={styles.locationSnippetText}>{job.city}, {job.district}</Text>
           </View>
 
-          <Text style={styles.sectionTitle}>Description</Text>
-          <Text style={styles.description}>{job.jobDescription}</Text>
-
-          <View style={styles.detailsGrid}>
-            <View style={styles.detailItem}>
-              <Ionicons name="wallet-outline" size={20} color={Colors.primary} />
-              <View style={styles.detailTextContainer}>
-                <Text style={styles.detailLabel}>Budget</Text>
-                <Text style={styles.detailValue}>LKR {job.budgetMin} - {job.budgetMax}</Text>
-              </View>
+          <View style={styles.metricsBar}>
+            <View style={styles.metricBox}>
+              <Text style={styles.metricLabel}>BUDGET (MAX)</Text>
+              <Text style={styles.metricValue}>LKR {job.budgetMax}</Text>
             </View>
-            <View style={styles.detailItem}>
-              <Ionicons name="time-outline" size={20} color={Colors.primary} />
-              <View style={styles.detailTextContainer}>
-                <Text style={styles.detailLabel}>Est. Duration</Text>
-                <Text style={styles.detailValue}>{job.estimatedDurationHours} hours</Text>
-              </View>
+            <View style={styles.metricBox}>
+              <Text style={styles.metricLabel}>EST. TIME</Text>
+              <Text style={styles.metricValue}>{job.estimatedDurationHours}h</Text>
             </View>
-            <View style={styles.detailItem}>
-              <Ionicons name="location-outline" size={20} color={Colors.primary} />
-              <View style={styles.detailTextContainer}>
-                <Text style={styles.detailLabel}>Location</Text>
-                <Text style={styles.detailValue}>{job.city}, {job.district}</Text>
-              </View>
+            <View style={styles.metricBox}>
+              <Text style={styles.metricLabel}>STATUS</Text>
+              <Text style={[styles.metricValue, { color: Colors.primary, textTransform: "capitalize" }]}>{job.jobStatus}</Text>
             </View>
           </View>
         </View>
 
+        <View style={styles.contentSection}>
+          <Text style={styles.sectionTitle}>Job Description</Text>
+          <Text style={styles.description}>{job.jobDescription}</Text>
+          
+          {job.customer && (
+            <View style={styles.clientCard}>
+              <View style={styles.clientAvatar}>
+                <Text style={styles.clientAvatarText}>{job.customer?.firstName?.[0] || "C"}</Text>
+              </View>
+              <View>
+                <Text style={styles.clientLabel}>POSTED BY</Text>
+                <Text style={styles.clientName}>{job.customer?.firstName} {job.customer?.lastName}</Text>
+              </View>
+            </View>
+          )}
+        </View>
+
         {!isOwner && user?.role === "worker" && !existingApplication && job.jobStatus === "active" && (
-          <View style={styles.card}>
+          <View style={styles.applySection}>
+            <View style={styles.divider} />
             <Text style={styles.sectionTitle}>Apply for this job</Text>
             
-            <Text style={styles.label}>Proposed Hourly Rate (LKR)</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="e.g. 1500"
-              placeholderTextColor={Colors.textMuted}
-              keyboardType="numeric"
-              value={rate}
-              onChangeText={setRate}
-            />
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>PROPOSED RATE (LKR / HR)</Text>
+              <TextInput
+                style={styles.modernInput}
+                placeholder="e.g. 1500"
+                placeholderTextColor={Colors.textMuted}
+                keyboardType="numeric"
+                value={rate}
+                onChangeText={setRate}
+              />
+            </View>
 
-            <Text style={styles.label}>Cover Letter / Message (Optional)</Text>
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              placeholder="Why are you a good fit?"
-              placeholderTextColor={Colors.textMuted}
-              multiline
-              numberOfLines={4}
-              value={coverLetter}
-              onChangeText={setCoverLetter}
-            />
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>WHY ARE YOU A GOOD FIT?</Text>
+              <TextInput
+                style={[styles.modernInput, styles.modernTextArea]}
+                placeholder="Describe your experience with similar tasks..."
+                placeholderTextColor={Colors.textMuted}
+                multiline
+                numberOfLines={4}
+                value={coverLetter}
+                onChangeText={setCoverLetter}
+              />
+            </View>
 
             <TouchableOpacity 
-              style={[styles.primaryButton, submitting && styles.disabledButton]} 
+              style={[styles.mainCta, submitting && styles.disabledButton]} 
               onPress={handleApply}
               disabled={submitting}
             >
               {submitting ? (
                 <ActivityIndicator color={Colors.white} />
               ) : (
-                <Text style={styles.primaryButtonText}>Submit Application</Text>
+                <Text style={styles.mainCtaText}>Submit Application</Text>
               )}
             </TouchableOpacity>
           </View>
@@ -413,151 +437,247 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: Spacing.md,
-    backgroundColor: Colors.surfaceCard,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 12,
+    backgroundColor: Colors.background,
   },
   headerTitle: {
-    fontSize: FontSize.lg,
-    fontWeight: FontWeight.bold,
+    fontSize: 16,
+    fontWeight: "700",
     color: Colors.textPrimary,
+    textTransform: "uppercase",
+    letterSpacing: 1,
   },
   backButton: {
-    padding: Spacing.xs,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(255,255,255,0.05)",
+    alignItems: "center",
+    justifyContent: "center",
   },
   scrollContent: {
-    padding: Spacing.md,
-    gap: Spacing.md,
+    paddingBottom: Spacing.xl * 2,
   },
-  card: {
-    backgroundColor: Colors.surfaceCard,
-    borderRadius: 12,
+  heroSection: {
     padding: Spacing.lg,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    backgroundColor: "rgba(255,255,255,0.02)",
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(255,255,255,0.05)",
   },
-  title: {
-    fontSize: FontSize.xl,
-    fontWeight: FontWeight.bold,
-    color: Colors.textPrimary,
-    marginBottom: Spacing.sm,
-  },
-  tagsContainer: {
+  urgencyRow: {
     flexDirection: "row",
-    flexWrap: "wrap",
-    gap: Spacing.xs,
-    marginBottom: Spacing.lg,
+    gap: 8,
+    marginBottom: 12,
   },
-  tag: {
-    backgroundColor: Colors.surfaceHighlight,
+  categoryBadge: {
+    backgroundColor: "rgba(255, 140, 0, 0.1)",
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 6,
+    borderWidth: 1,
+    borderColor: "rgba(255, 140, 0, 0.2)",
   },
-  tagText: {
-    fontSize: FontSize.sm,
-    color: Colors.textSecondary,
-    fontWeight: "500",
+  categoryBadgeText: {
+    color: Colors.primary,
+    fontSize: 11,
+    fontWeight: "700",
+    textTransform: "uppercase",
   },
-  sectionTitle: {
-    fontSize: FontSize.lg,
-    fontWeight: FontWeight.bold,
-    color: Colors.textPrimary,
-    marginBottom: Spacing.md,
-  },
-  description: {
-    fontSize: FontSize.md,
-    color: Colors.textSecondary,
-    lineHeight: 24,
-    marginBottom: Spacing.lg,
-  },
-  detailsGrid: {
-    gap: Spacing.md,
-  },
-  detailItem: {
+  statusTag: {
     flexDirection: "row",
     alignItems: "center",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    gap: 6,
   },
-  detailTextContainer: {
-    marginLeft: Spacing.md,
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
-  detailLabel: {
-    fontSize: FontSize.xs,
-    color: Colors.textMuted,
+  statusTagText: {
+    fontSize: 11,
+    fontWeight: "700",
     textTransform: "uppercase",
-    fontWeight: "bold",
   },
-  detailValue: {
-    fontSize: FontSize.md,
+  title: {
+    fontSize: 26,
+    fontWeight: "800",
     color: Colors.textPrimary,
-    fontWeight: "600",
+    lineHeight: 32,
+    marginBottom: 8,
   },
-  label: {
-    fontSize: FontSize.sm,
-    fontWeight: "bold",
-    color: Colors.textPrimary,
-    marginBottom: Spacing.xs,
+  locationSnippet: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 24,
   },
-  input: {
-    backgroundColor: Colors.background,
+  locationSnippetText: {
+    color: Colors.textMuted,
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  metricsBar: {
+    flexDirection: "row",
+    backgroundColor: "rgba(255,255,255,0.03)",
+    borderRadius: 16,
+    padding: 16,
+    justifyContent: "space-between",
     borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: 8,
-    padding: Spacing.md,
-    color: Colors.textPrimary,
-    marginBottom: Spacing.md,
+    borderColor: "rgba(255,255,255,0.05)",
   },
-  textArea: {
-    minHeight: 100,
+  metricBox: {
+    flex: 1,
+    alignItems: "center",
+  },
+  metricLabel: {
+    fontSize: 10,
+    color: Colors.textMuted,
+    fontWeight: "700",
+    marginBottom: 4,
+  },
+  metricValue: {
+    fontSize: 15,
+    color: Colors.textPrimary,
+    fontWeight: "700",
+  },
+  contentSection: {
+    padding: Spacing.lg,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: Colors.textPrimary,
+    marginBottom: 12,
+  },
+  description: {
+    fontSize: 16,
+    color: Colors.textSecondary,
+    lineHeight: 24,
+    marginBottom: 24,
+  },
+  clientCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255,255,255,0.03)",
+    padding: 16,
+    borderRadius: 12,
+    gap: 12,
+  },
+  clientAvatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: Colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  clientAvatarText: {
+    color: Colors.white,
+    fontWeight: "800",
+    fontSize: 18,
+  },
+  clientLabel: {
+    fontSize: 10,
+    color: Colors.textMuted,
+    fontWeight: "800",
+    letterSpacing: 0.5,
+  },
+  clientName: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: Colors.textPrimary,
+  },
+  applySection: {
+    paddingHorizontal: Spacing.lg,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: "rgba(255,255,255,0.05)",
+    marginBottom: 24,
+  },
+  inputGroup: {
+    marginBottom: 20,
+  },
+  inputLabel: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: Colors.textMuted,
+    marginBottom: 8,
+    letterSpacing: 0.5,
+  },
+  modernInput: {
+    backgroundColor: "rgba(255,255,255,0.03)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
+    borderRadius: 12,
+    padding: 16,
+    color: Colors.textPrimary,
+    fontSize: 16,
+  },
+  modernTextArea: {
+    minHeight: 120,
     textAlignVertical: "top",
   },
-  primaryButton: {
+  mainCta: {
     backgroundColor: Colors.primary,
-    padding: Spacing.md,
-    borderRadius: 8,
+    paddingVertical: 16,
+    borderRadius: 12,
     alignItems: "center",
-    marginTop: Spacing.sm,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
-  disabledButton: {
-    opacity: 0.7,
-  },
-  primaryButtonText: {
+  mainCtaText: {
     color: Colors.white,
-    fontWeight: FontWeight.bold,
-    fontSize: FontSize.md,
+    fontWeight: "800",
+    fontSize: 16,
+  },
+  card: {
+    backgroundColor: Colors.surfaceCard,
+    borderRadius: 16,
+    padding: Spacing.lg,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.05)",
+    marginHorizontal: Spacing.lg,
   },
   applicantRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: Spacing.sm,
+    paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.divider,
+    borderBottomColor: "rgba(255,255,255,0.05)",
   },
   applicantName: {
-    fontSize: FontSize.md,
-    fontWeight: "bold",
+    fontSize: 16,
+    fontWeight: "700",
     color: Colors.textPrimary,
   },
   applicantRate: {
-    fontSize: FontSize.sm,
+    fontSize: 14,
     color: Colors.textSecondary,
+    marginTop: 2,
   },
   appCoverLetter: {
-    fontSize: FontSize.sm,
+    fontSize: 13,
     color: Colors.textMuted,
     fontStyle: "italic",
-    marginTop: 2,
+    marginTop: 4,
   },
   actionButtons: {
     flexDirection: "row",
-    gap: Spacing.xs,
+    gap: 8,
   },
   actionBtn: {
     paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
+    paddingVertical: 8,
+    borderRadius: 8,
   },
   acceptBtn: {
     backgroundColor: Colors.success,
@@ -567,52 +687,53 @@ const styles = StyleSheet.create({
   },
   actionBtnText: {
     color: Colors.white,
-    fontSize: FontSize.xs,
-    fontWeight: "bold",
+    fontSize: 12,
+    fontWeight: "800",
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: "rgba(0,0,0,0.8)",
     justifyContent: "center",
     alignItems: "center",
     padding: Spacing.xl,
   },
   modalContent: {
     backgroundColor: Colors.surfaceCard,
-    borderRadius: 12,
+    borderRadius: 20,
     padding: Spacing.lg,
     width: "100%",
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: "rgba(255,255,255,0.1)",
   },
   modalTitle: {
-    fontSize: FontSize.lg,
-    fontWeight: "bold",
+    fontSize: 20,
+    fontWeight: "800",
     color: Colors.textPrimary,
-    marginBottom: Spacing.md,
+    marginBottom: 20,
   },
   modalActions: {
     flexDirection: "row",
     justifyContent: "flex-end",
-    gap: Spacing.md,
+    gap: 12,
+    marginTop: 20,
   },
   modalBtn: {
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
-    borderRadius: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 10,
   },
   modalCancelBtn: {
-    backgroundColor: Colors.surfaceHighlight,
+    backgroundColor: "rgba(255,255,255,0.05)",
   },
   modalCancelText: {
     color: Colors.textPrimary,
-    fontWeight: "bold",
+    fontWeight: "700",
   },
   modalRejectBtn: {
     backgroundColor: Colors.error,
   },
   modalRejectText: {
     color: Colors.white,
-    fontWeight: "bold",
+    fontWeight: "800",
   },
 });

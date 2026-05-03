@@ -69,26 +69,37 @@ export default function ReviewsScreen() {
 
   const [form, setForm] = useState(INITIAL_FORM);
 
-  const reviewerType = user?.role === "worker" ? "worker" : "customer";
+  const reviewerType = user?.role === "worker" ? "worker" : (user?.role === "supplier" ? "supplier" : "customer");
   const bookingsRole = reviewerType === "worker" ? "worker" : "customer";
 
   const loadData = useCallback(async () => {
     try {
       setError("");
       setLoading(true);
-      const [reviewsData, bookingsData] = await Promise.all([
-        getMyReviews(token),
-        getMyBookings(token, bookingsRole),
+      
+      const reviewsPromise = getMyReviews(token);
+      let transactionsPromise;
+
+      if (user?.role === "supplier") {
+        transactionsPromise = getSupplierRentals(token);
+      } else {
+        transactionsPromise = getMyBookings(token, bookingsRole);
+      }
+
+      const [reviewsData, transactionsData] = await Promise.all([
+        reviewsPromise,
+        transactionsPromise,
       ]);
+
       setReviews(reviewsData);
-      setBookings(bookingsData);
+      setBookings(transactionsData);
     } catch (e) {
       setError(e.message || "Failed to load reviews");
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [token, bookingsRole]);
+  }, [token, bookingsRole, user?.role]);
 
   useEffect(() => {
     loadData();
@@ -111,15 +122,21 @@ export default function ReviewsScreen() {
   const bookingToReviewee = useMemo(() => {
     const map = new Map();
     for (const booking of bookings) {
-      const id = reviewerType === "worker"
-        ? booking.customer?._id || booking.customer
-        : (booking.assignedWorker?._id || booking.assignedWorker || booking.worker?._id || booking.worker);
+      let id;
+      if (user?.role === "supplier") {
+        id = booking.customer?._id || booking.customer;
+      } else if (reviewerType === "worker") {
+        id = booking.customer?._id || booking.customer;
+      } else {
+        id = (booking.assignedWorker?._id || booking.assignedWorker || booking.worker?._id || booking.worker);
+      }
+      
       if (id) {
         map.set(booking._id, id);
       }
     }
     return map;
-  }, [bookings, reviewerType]);
+  }, [bookings, reviewerType, user?.role]);
 
   function updateForm(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -133,10 +150,15 @@ export default function ReviewsScreen() {
 
   function useBooking(booking) {
     updateForm("booking", booking._id);
-    updateForm("jobTitle", booking.job?.jobTitle || "");
+    const title = booking.job?.jobTitle || booking.equipment?.name || "Rental";
+    updateForm("jobTitle", title);
     const reviewee = bookingToReviewee.get(booking._id) || "";
     if (reviewee) {
       updateForm("reviewee", reviewee);
+      const revieweeObj = booking.customer || booking.worker || booking.assignedWorker;
+      if (revieweeObj?.firstName) {
+        updateForm("revieweeName", `${revieweeObj.firstName} ${revieweeObj.lastName || ""}`);
+      }
     }
   }
 
@@ -212,13 +234,13 @@ export default function ReviewsScreen() {
           <View style={styles.userInfo}>
             <View style={styles.avatar}>
               <Text style={styles.avatarText}>
-                {(reviewerType === "worker" ? (item.reviewer?.firstName?.[0] || "C") : (item.reviewee?.firstName?.[0] || "P"))}
+                {(item.reviewee?.firstName?.[0] || (reviewerType === "worker" ? "C" : "W"))}
               </Text>
             </View>
             <View>
               <Text style={styles.itemTitle}>
-                {reviewerType === "worker"
-                  ? `${item.reviewer?.firstName || "Customer"}`
+                {reviewerType === "worker" || reviewerType === "supplier"
+                  ? `${item.reviewee?.firstName || "Customer"}`
                   : `${item.reviewee?.firstName || "Professional"}`}
               </Text>
               <StarRating rating={item.overallRating || item.rating} size={14} readOnly />
@@ -312,7 +334,9 @@ export default function ReviewsScreen() {
                       </View>
                     ) : (
                       <View style={styles.fieldGroup}>
-                        <Text style={SharedStyles.label}>Select Recent Booking</Text>
+                        <Text style={SharedStyles.label}>
+                          {user?.role === "supplier" ? "Select Recent Rental" : "Select Recent Booking"}
+                        </Text>
                         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillScroll}>
                           {bookings.length > 0 ? (
                             bookings.slice(0, 12).map((booking) => (
@@ -322,12 +346,14 @@ export default function ReviewsScreen() {
                                 onPress={() => useBooking(booking)}
                               >
                                 <Text style={[SharedStyles.pillText, form.booking === booking._id && SharedStyles.pillTextActive]}>
-                                  {booking.job?.jobTitle || "Job"} • {new Date(booking.scheduledDate || booking.createdAt).toLocaleDateString()}
+                                  {booking.job?.jobTitle || booking.equipment?.name || (user?.role === "supplier" ? "Rental" : "Job")} • {new Date(booking.scheduledDate || booking.createdAt).toLocaleDateString()}
                                 </Text>
                               </Pressable>
                             ))
                           ) : (
-                            <Text style={styles.emptySmall}>No recent bookings to review</Text>
+                            <Text style={styles.emptySmall}>
+                              {user?.role === "supplier" ? "No recent rentals to review" : "No recent bookings to review"}
+                            </Text>
                           )}
                         </ScrollView>
                       </View>

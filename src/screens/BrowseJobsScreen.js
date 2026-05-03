@@ -28,6 +28,12 @@ export default function BrowseJobsScreen() {
 
   const fetchJobs = useCallback(async () => {
     try {
+      if (user?.role === "supplier") {
+        setJobs([]);
+        setLoading(false);
+        return;
+      }
+
       const data = await getJobs(token);
       setJobs(data.filter(j => j.jobStatus === "active" || j.status === "active"));
     } catch (error) {
@@ -36,7 +42,7 @@ export default function BrowseJobsScreen() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [token]);
+  }, [token, user?.role]);
 
   useEffect(() => {
     fetchJobs();
@@ -45,6 +51,22 @@ export default function BrowseJobsScreen() {
   const handleRefresh = () => {
     setRefreshing(true);
     fetchJobs();
+  };
+
+  const timeAgo = (date) => {
+    if (!date) return "";
+    const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+    let interval = seconds / 31536000;
+    if (interval > 1) return Math.floor(interval) + "y ago";
+    interval = seconds / 2592000;
+    if (interval > 1) return Math.floor(interval) + "mo ago";
+    interval = seconds / 86400;
+    if (interval > 1) return Math.floor(interval) + "d ago";
+    interval = seconds / 3600;
+    if (interval > 1) return Math.floor(interval) + "h ago";
+    interval = seconds / 60;
+    if (interval > 1) return Math.floor(interval) + "m ago";
+    return "just now";
   };
 
   const filteredJobs = jobs.filter(job => {
@@ -66,29 +88,53 @@ export default function BrowseJobsScreen() {
     return (
       <TouchableOpacity 
         style={styles.card} 
+        activeOpacity={0.9}
         onPress={() => navigation.navigate("JobDetail", { jobId: item._id })}
       >
         <View style={styles.cardHeader}>
-          <Text style={styles.jobTitle}>{item.jobTitle}</Text>
-          {isEmergency && <View style={[styles.urgencyBadge, { backgroundColor: "#FEF2F2" }]}><Text style={{color: "#EF4444", fontSize: 10, fontWeight: "bold"}}>🔥 Emergency</Text></View>}
-          {isUrgent && <View style={[styles.urgencyBadge, { backgroundColor: "#FFFBEB" }]}><Text style={{color: "#F59E0B", fontSize: 10, fontWeight: "bold"}}>⚡ Urgent</Text></View>}
-        </View>
-
-        <View style={styles.tagsContainer}>
-          <View style={styles.tag}><Text style={styles.tagText}>{item.category}</Text></View>
-          <View style={styles.tag}><Text style={styles.tagText}>{item.district}</Text></View>
-        </View>
-
-        <View style={styles.detailsRow}>
-          <View style={styles.detailItem}>
-            <Ionicons name="wallet-outline" size={16} color={Colors.textMuted} />
-            <Text style={styles.detailText}>LKR {item.budgetMin} - {item.budgetMax}</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.jobTitle} numberOfLines={1}>{item.jobTitle}</Text>
+            <View style={styles.posterInfo}>
+              <Text style={styles.posterText}>by {item.postedBy?.firstName || "Customer"}</Text>
+              <Text style={styles.dotSeparator}>•</Text>
+              <Text style={styles.timeText}>{timeAgo(item.createdAt)}</Text>
+            </View>
           </View>
-          <View style={styles.detailItem}>
-            <Ionicons name="time-outline" size={16} color={Colors.textMuted} />
-            <Text style={styles.detailText}>{item.estimatedDurationHours} hours</Text>
+          <View style={styles.budgetBadge}>
+            <Text style={styles.budgetText}>LKR {item.budgetMax || item.budgetMin}</Text>
           </View>
         </View>
+
+        <View style={styles.cardBody}>
+          <View style={styles.infoPill}>
+            <Ionicons name="folder-outline" size={12} color={Colors.primary} />
+            <Text style={styles.infoPillText}>{item.category}</Text>
+          </View>
+          <View style={styles.infoPill}>
+            <Ionicons name="location-outline" size={12} color={Colors.primary} />
+            <Text style={styles.infoPillText}>{item.district}</Text>
+          </View>
+          <View style={styles.infoPill}>
+            <Ionicons name="time-outline" size={12} color={Colors.primary} />
+            <Text style={styles.infoPillText}>{item.estimatedDurationHours}h</Text>
+          </View>
+        </View>
+
+        {(isEmergency || isUrgent) && (
+          <View style={styles.urgencyRow}>
+            {isEmergency ? (
+              <View style={[styles.statusTag, { backgroundColor: "#450a0a" }]}>
+                <View style={[styles.statusDot, { backgroundColor: "#ef4444" }]} />
+                <Text style={[styles.statusTagText, { color: "#fca5a5" }]}>Emergency</Text>
+              </View>
+            ) : (
+              <View style={[styles.statusTag, { backgroundColor: "#451a03" }]}>
+                <View style={[styles.statusDot, { backgroundColor: "#f59e0b" }]} />
+                <Text style={[styles.statusTagText, { color: "#fcd34d" }]}>Urgent</Text>
+              </View>
+            )}
+          </View>
+        )}
       </TouchableOpacity>
     );
   };
@@ -115,16 +161,39 @@ export default function BrowseJobsScreen() {
           <Ionicons name="search" size={20} color={Colors.textMuted} style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search jobs..."
+            placeholder="Search for skills, locations..."
             placeholderTextColor={Colors.textMuted}
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
         </View>
         <TouchableOpacity style={styles.filterButton} onPress={() => setFilterVisible(true)}>
-          <Ionicons name="options" size={24} color={Colors.textPrimary} />
+          <View style={styles.filterBtnIcon}>
+            <Ionicons name="options-outline" size={22} color={Colors.textPrimary} />
+          </View>
           {(filterCategory || filterDistrict || sortBy !== "newest") && <View style={styles.filterDot} />}
         </TouchableOpacity>
+      </View>
+
+      <View style={styles.categoryContainer}>
+        <FlatList
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          data={["All", ...CATEGORIES]}
+          keyExtractor={(item) => item}
+          contentContainerStyle={styles.categoryList}
+          renderItem={({ item: cat }) => {
+            const isActive = (cat === "All" && !filterCategory) || filterCategory === cat;
+            return (
+              <TouchableOpacity
+                style={[styles.catPill, isActive && styles.catPillActive]}
+                onPress={() => setFilterCategory(cat === "All" ? "" : cat)}
+              >
+                <Text style={[styles.catPillText, isActive && styles.catPillTextActive]}>{cat}</Text>
+              </TouchableOpacity>
+            );
+          }}
+        />
       </View>
 
       {loading ? (
@@ -142,9 +211,15 @@ export default function BrowseJobsScreen() {
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
           ListEmptyComponent={
             <View style={styles.emptyState}>
-              <Ionicons name="briefcase-outline" size={48} color={Colors.textMuted} />
-              <Text style={styles.emptyTitle}>No Jobs Found</Text>
-              <Text style={styles.emptySub}>Try adjusting your filters or search query.</Text>
+              <Ionicons name={user?.role === "supplier" ? "lock-closed-outline" : "briefcase-outline"} size={48} color={Colors.textMuted} />
+              <Text style={styles.emptyTitle}>
+                {user?.role === "supplier" ? "Access Restricted" : "No Jobs Found"}
+              </Text>
+              <Text style={styles.emptySub}>
+                {user?.role === "supplier" 
+                  ? "As a supplier, your focus is on equipment management. Service job browsing is reserved for workers." 
+                  : "Try adjusting your filters or search query."}
+              </Text>
             </View>
           }
         />
@@ -269,73 +344,151 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
   },
   listContainer: {
-    padding: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    paddingBottom: Spacing.xl,
   },
   card: {
     backgroundColor: Colors.surfaceCard,
-    borderRadius: 12,
-    padding: Spacing.lg,
+    borderRadius: 16,
+    padding: Spacing.md,
     marginBottom: Spacing.md,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: "rgba(255,255,255,0.05)",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
   cardHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: Spacing.sm,
+    alignItems: "center",
+    marginBottom: 12,
   },
   jobTitle: {
-    fontSize: FontSize.lg,
-    fontWeight: FontWeight.bold,
+    fontSize: 17,
+    fontWeight: "700",
     color: Colors.textPrimary,
-    flex: 1,
+    letterSpacing: 0.3,
   },
-  urgencyBadge: {
+  posterInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 4,
+  },
+  posterText: {
+    fontSize: 12,
+    color: Colors.textMuted,
+  },
+  dotSeparator: {
+    marginHorizontal: 6,
+    color: Colors.textMuted,
+    fontSize: 10,
+  },
+  timeText: {
+    fontSize: 12,
+    color: Colors.textMuted,
+  },
+  budgetBadge: {
+    backgroundColor: "rgba(16, 185, 129, 0.1)",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "rgba(16, 185, 129, 0.2)",
+  },
+  budgetText: {
+    color: "#10b981",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  cardBody: {
+    flexDirection: "row",
+    gap: 8,
+    marginBottom: 12,
+  },
+  infoPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255,255,255,0.03)",
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 12,
-    marginLeft: 8,
+    borderRadius: 6,
+    gap: 4,
   },
-  tagsContainer: {
+  infoPillText: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    fontWeight: "500",
+  },
+  urgencyRow: {
     flexDirection: "row",
-    flexWrap: "wrap",
-    gap: Spacing.xs,
-    marginBottom: Spacing.md,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255,255,255,0.05)",
   },
-  tag: {
-    backgroundColor: Colors.surfaceHighlight,
+  statusTag: {
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 4,
+    gap: 6,
   },
-  tagText: {
-    fontSize: FontSize.xs,
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  statusTagText: {
+    fontSize: 11,
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  categoryContainer: {
+    paddingBottom: Spacing.md,
+  },
+  categoryList: {
+    paddingHorizontal: Spacing.md,
+    gap: 8,
+  },
+  catPill: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: "rgba(255,255,255,0.05)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
+  },
+  catPillActive: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+  },
+  catPillText: {
     color: Colors.textSecondary,
-    fontWeight: "500",
+    fontSize: 13,
+    fontWeight: "600",
   },
-  detailsRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    borderTopWidth: 1,
-    borderTopColor: Colors.divider,
-    paddingTop: Spacing.md,
+  catPillTextActive: {
+    color: Colors.white,
   },
-  detailItem: {
-    flexDirection: "row",
+  filterBtnIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    backgroundColor: "rgba(255,255,255,0.05)",
     alignItems: "center",
-  },
-  detailText: {
-    marginLeft: 6,
-    color: Colors.textSecondary,
-    fontSize: FontSize.sm,
-    fontWeight: "500",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
   },
   emptyState: {
     alignItems: "center",
     justifyContent: "center",
     padding: Spacing.xl,
-    marginTop: 40,
+    marginTop: 60,
   },
   emptyTitle: {
     fontSize: FontSize.lg,

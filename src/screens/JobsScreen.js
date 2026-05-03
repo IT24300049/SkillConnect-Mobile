@@ -126,8 +126,20 @@ export default function JobsScreen({ navigation }) {
     try {
       setError("");
       setLoading(true);
-      const customerMode = user?.role === "customer";
-      const list = customerMode ? await getMyJobs(token) : await getJobs(token);
+      
+      const role = user?.role;
+      let list = [];
+
+      if (role === "customer") {
+        list = await getMyJobs(token);
+      } else if (role === "worker" || role === "admin") {
+        // Workers and Admins see all active jobs
+        list = await getJobs(token);
+      } else if (role === "supplier") {
+        // Suppliers do NOT see customer jobs
+        list = [];
+      }
+
       setJobs(list);
     } catch (e) {
       setError(e.message || "Failed to load jobs");
@@ -483,20 +495,22 @@ export default function JobsScreen({ navigation }) {
             )}
 
             {/* ── Status Tabs ──────────── */}
-            <View style={styles.tabsContainer}>
-              <Pressable
-                style={[styles.tab, activeTab === "active" && styles.activeTab]}
-                onPress={() => setActiveTab("active")}
-              >
-                <Text style={[styles.tabText, activeTab === "active" && styles.activeTabText]}>Active Jobs</Text>
-              </Pressable>
-              <Pressable
-                style={[styles.tab, activeTab === "history" && styles.activeTab]}
-                onPress={() => setActiveTab("history")}
-              >
-                <Text style={[styles.tabText, activeTab === "history" && styles.activeTabText]}>Job History</Text>
-              </Pressable>
-            </View>
+            {user?.role !== "supplier" && (
+              <View style={styles.tabsContainer}>
+                <Pressable
+                  style={[styles.tab, activeTab === "active" && styles.activeTab]}
+                  onPress={() => setActiveTab("active")}
+                >
+                  <Text style={[styles.tabText, activeTab === "active" && styles.activeTabText]}>Active Jobs</Text>
+                </Pressable>
+                <Pressable
+                  style={[styles.tab, activeTab === "history" && styles.activeTab]}
+                  onPress={() => setActiveTab("history")}
+                >
+                  <Text style={[styles.tabText, activeTab === "history" && styles.activeTabText]}>Job History</Text>
+                </Pressable>
+              </View>
+            )}
 
             {error ? (
               <View style={styles.errorBox}>
@@ -506,7 +520,7 @@ export default function JobsScreen({ navigation }) {
           </View>
         }
         ListEmptyComponent={
-          !loading ? (
+          !loading && user?.role !== "supplier" ? (
             <View style={styles.emptyState}>
               <Text style={styles.emptyIcon}>💼</Text>
               <Text style={styles.emptyTitle}>{activeTab === "active" ? "No Active Jobs" : "No Job History"}</Text>
