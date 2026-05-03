@@ -1,7 +1,7 @@
 const express = require('express');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
-const { sanitizeProfileData } = require('../middleware/validation');
+const { sanitizeProfileData, authValidation, validate } = require('../middleware/validation');
 const router = express.Router();
 
 // ROUTE: Get my own profile
