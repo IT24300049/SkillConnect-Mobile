@@ -47,6 +47,21 @@ function SectionHeader({ title, icon }) {
   );
 }
 
+function RequirementItem({ label, met }) {
+  return (
+    <View style={styles.requirementRow}>
+      <Ionicons
+        name={met ? "checkmark-circle" : "close-circle-outline"}
+        size={14}
+        color={met ? Colors.success : Colors.textMuted}
+      />
+      <Text style={[styles.requirementText, met && { color: Colors.success, fontWeight: "600" }]}>
+        {label}
+      </Text>
+    </View>
+  );
+}
+
 export default function RegisterScreen({ navigation }) {
   const { signUp } = useAuth();
   const [form, setForm] = useState(initialForm);
@@ -59,6 +74,16 @@ export default function RegisterScreen({ navigation }) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showSkillPicker, setShowSkillPicker] = useState(false);
+
+  const passwordRequirements = {
+    length: form.password.length >= 8,
+    upper: /[A-Z]/.test(form.password),
+    lower: /[a-z]/.test(form.password),
+    number: /[0-9]/.test(form.password),
+    symbol: /[!@#$%^&*(),.?":{}|<>]/.test(form.password),
+  };
+
+  const isPasswordValid = Object.values(passwordRequirements).every(Boolean);
 
   const availableCities = form.district ? SRI_LANKA_LOCATIONS[form.district] : [];
 
@@ -86,6 +111,14 @@ export default function RegisterScreen({ navigation }) {
     if (!form.email) newErrors.email = true;
     if (!form.password) newErrors.password = true;
     if (!form.confirmPassword) newErrors.confirmPassword = true;
+
+    // Password Complexity Check
+    if (!isPasswordValid) {
+      newErrors.password = true;
+      setError("Password does not meet all security requirements");
+      setErrors(newErrors);
+      return;
+    }
 
     // Password match check
     if (form.password && form.confirmPassword && form.password !== form.confirmPassword) {
@@ -267,7 +300,7 @@ export default function RegisterScreen({ navigation }) {
               <Ionicons name="shield-checkmark-outline" size={18} color={Colors.textMuted} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
-                placeholder="Password"
+                placeholder="Password (Min. 8 chars, A-Z, 0-9, !@#)"
                 placeholderTextColor={Colors.textMuted}
                 secureTextEntry={!showPassword}
                 value={form.password}
@@ -279,6 +312,19 @@ export default function RegisterScreen({ navigation }) {
                 <Ionicons name={showPassword ? "eye-off" : "eye"} size={20} color={Colors.textMuted} />
               </Pressable>
             </View>
+
+            {/* Password Requirements Checklist */}
+            {form.password.length > 0 && (
+              <View style={styles.requirementsContainer}>
+                <View style={styles.requirementsGrid}>
+                  <RequirementItem label="8+ Characters" met={passwordRequirements.length} />
+                  <RequirementItem label="Uppercase" met={passwordRequirements.upper} />
+                  <RequirementItem label="Lowercase" met={passwordRequirements.lower} />
+                  <RequirementItem label="Number" met={passwordRequirements.number} />
+                  <RequirementItem label="Symbol" met={passwordRequirements.symbol} />
+                </View>
+              </View>
+            )}
 
             <View style={inputContainerStyle("confirmPassword")}>
               <Ionicons name="checkmark-circle-outline" size={18} color={Colors.textMuted} style={styles.inputIcon} />
@@ -502,4 +548,30 @@ const styles = StyleSheet.create({
   errorText: { color: Colors.error, fontSize: FontSize.sm, textAlign: "center", marginBottom: Spacing.md },
   signInRow: { marginTop: Spacing.xl, alignItems: "center" },
   signInText: { color: Colors.textMuted, fontSize: FontSize.base },
+
+  // Requirements Checklist
+  requirementsContainer: {
+    backgroundColor: Colors.backgroundAlt,
+    borderRadius: Radius.sm,
+    padding: Spacing.md,
+    marginBottom: Spacing.md,
+    marginTop: -Spacing.sm, // Bring closer to input
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  requirementsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: Spacing.sm,
+  },
+  requirementRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    width: "45%", // Two columns roughly
+  },
+  requirementText: {
+    fontSize: 11,
+    color: Colors.textMuted,
+  },
 });

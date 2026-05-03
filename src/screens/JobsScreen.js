@@ -14,7 +14,10 @@ import { useAuth } from "../context/AuthContext";
 import { createJob, deleteJob, getJobs, getMyJobs, updateJob } from "../services/apiClient";
 import { Colors, FontSize, FontWeight, Radius, Shadow, Spacing } from "../theme";
 import ThemedInput from "../components/ThemedInput";
+import SelectionField from "../components/SelectionField";
+import PickerModal from "../components/PickerModal";
 import { CATEGORIES } from "../constants/categories";
+import Ionicons from "@expo/vector-icons/Ionicons";
 
 const QUICK_MODULES = [
   { name: "Bookings", screen: "Bookings", icon: "📅", desc: "Manage your service bookings" },
@@ -100,6 +103,9 @@ export default function JobsScreen({ navigation }) {
   const [editingId, setEditingId] = useState(null);
   const [createBusy, setCreateBusy] = useState(false);
   const [actionError, setActionError] = useState("");
+
+  const [showCategoryPicker, setShowCategoryPicker] = useState(false);
+  const [showDistrictPicker, setShowDistrictPicker] = useState(false);
 
   const loadJobs = useCallback(async () => {
     try {
@@ -307,76 +313,95 @@ export default function JobsScreen({ navigation }) {
             {/* ── Create/Edit Job Form ──────── */}
             {customerMode && showForm && (
               <View style={styles.card}>
-                <Text style={styles.cardTitle}>{editingId ? "Edit Job" : "New Job"}</Text>
+                <View style={styles.cardHeader}>
+                  <Ionicons name={editingId ? "create-outline" : "add-circle-outline"} size={24} color={Colors.primary} />
+                  <Text style={styles.cardTitle}>{editingId ? "Edit Job" : "New Job"}</Text>
+                </View>
 
-                <Text style={styles.label}>Job Title</Text>
-                <ThemedInput
-                  style={styles.input}
-                  placeholder="Need a plumber"
-                  value={form.jobTitle}
-                  onChangeText={(v) => updateForm("jobTitle", v)}
-                />
+                {/* Section 1: Basic Info */}
+                <View style={styles.formSection}>
+                  <Text style={styles.sectionLabel}>General Information</Text>
+                  <Text style={styles.label}>Job Title</Text>
+                  <ThemedInput
+                    style={styles.input}
+                    placeholder="e.g. House plumbing repair"
+                    value={form.jobTitle}
+                    onChangeText={(v) => updateForm("jobTitle", v)}
+                  />
+                </View>
 
-                <Text style={styles.label}>Category</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryPicker}>
-                  {CATEGORIES.map((cat) => (
-                    <Pressable
-                      key={cat}
-                      style={[styles.chip, form.category === cat && styles.chipActive]}
-                      onPress={() => updateForm("category", cat)}
-                    >
-                      <Text style={[styles.chipText, form.category === cat && styles.chipTextActive]}>{cat}</Text>
-                    </Pressable>
-                  ))}
-                </ScrollView>
-
-                <Text style={styles.label}>District</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryPicker}>
-                  {DISTRICTS.map((dist) => (
-                    <Pressable
-                      key={dist}
-                      style={[styles.chip, form.district === dist && styles.chipActive]}
-                      onPress={() => updateForm("district", dist)}
-                    >
-                      <Text style={[styles.chipText, form.district === dist && styles.chipTextActive]}>{dist}</Text>
-                    </Pressable>
-                  ))}
-                </ScrollView>
-
-                <View style={{ flexDirection: "row", gap: Spacing.sm }}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.label}>Min Budget</Text>
-                    <ThemedInput
-                      style={styles.input}
-                      placeholder="1000"
-                      keyboardType="numeric"
-                      value={form.budgetMin}
-                      onChangeText={(v) => updateForm("budgetMin", v)}
-                    />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.label}>Max Budget</Text>
-                    <ThemedInput
-                      style={styles.input}
-                      placeholder="5000"
-                      keyboardType="numeric"
-                      value={form.budgetMax}
-                      onChangeText={(v) => updateForm("budgetMax", v)}
-                    />
+                {/* Section 2: Category & Location */}
+                <View style={styles.formSection}>
+                  <Text style={styles.sectionLabel}>Category & Location</Text>
+                  <View style={{ flexDirection: "row", gap: Spacing.md }}>
+                    <View style={{ flex: 1 }}>
+                      <SelectionField
+                        label="Category"
+                        value={form.category}
+                        placeholder="Select category"
+                        onPress={() => setShowCategoryPicker(true)}
+                        icon="construct-outline"
+                      />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <SelectionField
+                        label="District"
+                        value={form.district}
+                        placeholder="Select district"
+                        onPress={() => setShowDistrictPicker(true)}
+                        icon="location-outline"
+                      />
+                    </View>
                   </View>
                 </View>
 
-                <Text style={styles.label}>Description</Text>
-                <ThemedInput
-                  style={[styles.input, styles.textArea]}
-                  placeholder="Detailed description..."
-                  multiline
-                  value={form.jobDescription}
-                  onChangeText={(v) => updateForm("jobDescription", v)}
-                />
+                {/* Section 3: Budget & Details */}
+                <View style={styles.formSection}>
+                  <Text style={styles.sectionLabel}>Budget & Description</Text>
+                  <View style={{ flexDirection: "row", gap: Spacing.md }}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.label}>Min Budget</Text>
+                      <View style={styles.inputWithIcon}>
+                        <Text style={styles.inputPrefix}>Rs.</Text>
+                        <ThemedInput
+                          style={styles.flexInput}
+                          placeholder="1000"
+                          keyboardType="numeric"
+                          value={form.budgetMin}
+                          onChangeText={(v) => updateForm("budgetMin", v)}
+                        />
+                      </View>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.label}>Max Budget</Text>
+                      <View style={styles.inputWithIcon}>
+                        <Text style={styles.inputPrefix}>Rs.</Text>
+                        <ThemedInput
+                          style={styles.flexInput}
+                          placeholder="5000"
+                          keyboardType="numeric"
+                          value={form.budgetMax}
+                          onChangeText={(v) => updateForm("budgetMax", v)}
+                        />
+                      </View>
+                    </View>
+                  </View>
+
+                  <Text style={styles.label}>Job Description</Text>
+                  <ThemedInput
+                    style={[styles.input, styles.textArea]}
+                    placeholder="Provide details about the job, specific requirements, or timing..."
+                    multiline
+                    value={form.jobDescription}
+                    onChangeText={(v) => updateForm("jobDescription", v)}
+                  />
+                </View>
 
                 {actionError ? (
-                  <Text style={styles.errorText}>⚠ {actionError}</Text>
+                  <View style={styles.formError}>
+                    <Ionicons name="alert-circle" size={20} color={Colors.error} />
+                    <Text style={styles.errorText}>{actionError}</Text>
+                  </View>
                 ) : null}
 
                 <Pressable
@@ -387,9 +412,28 @@ export default function JobsScreen({ navigation }) {
                   {createBusy ? (
                     <ActivityIndicator color="#fff" size="small" />
                   ) : (
-                    <Text style={styles.primaryBtnText}>{editingId ? "Update Job" : "Post Job"}</Text>
+                    <>
+                      <Ionicons name="cloud-upload-outline" size={20} color="#fff" style={{ marginRight: 8 }} />
+                      <Text style={styles.primaryBtnText}>{editingId ? "Save Changes" : "Post Job Now"}</Text>
+                    </>
                   )}
                 </Pressable>
+
+                {/* Modals */}
+                <PickerModal
+                  visible={showCategoryPicker}
+                  title="Select Category"
+                  items={CATEGORIES}
+                  onSelect={(v) => updateForm("category", v)}
+                  onClose={() => setShowCategoryPicker(false)}
+                />
+                <PickerModal
+                  visible={showDistrictPicker}
+                  title="Select District"
+                  items={DISTRICTS}
+                  onSelect={(v) => updateForm("district", v)}
+                  onClose={() => setShowDistrictPicker(false)}
+                />
               </View>
             )}
 
@@ -702,11 +746,30 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xl,
     ...Shadow.md,
   },
+  cardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+    marginBottom: Spacing.xl,
+  },
   cardTitle: {
     fontSize: FontSize.lg,
     fontWeight: FontWeight.bold,
     color: Colors.textPrimary,
-    marginBottom: Spacing.lg,
+  },
+  formSection: {
+    marginBottom: Spacing.xl,
+    paddingBottom: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.divider,
+  },
+  sectionLabel: {
+    fontSize: FontSize.xs,
+    fontWeight: FontWeight.bold,
+    color: Colors.primary,
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    marginBottom: Spacing.md,
   },
   label: {
     fontSize: FontSize.sm,
@@ -716,82 +779,64 @@ const styles = StyleSheet.create({
   },
   input: {
     marginBottom: Spacing.md,
-    color: Colors.textPrimary, // Ensure text is visible
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.lg,
+    height: 52,
+    backgroundColor: Colors.surfaceInput,
+    color: Colors.textPrimary,
+  },
+  inputWithIcon: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.surfaceInput,
+    paddingHorizontal: Spacing.md,
+    height: 52,
+    marginBottom: Spacing.md,
+  },
+  inputPrefix: {
+    color: Colors.textMuted,
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
+    marginRight: Spacing.xs,
+  },
+  flexInput: {
+    flex: 1,
+    color: Colors.textPrimary,
+    fontSize: FontSize.base,
   },
   textArea: {
-    height: 100,
+    height: 120,
     textAlignVertical: "top",
-    color: Colors.textPrimary, // Ensure text is visible
+    paddingTop: Spacing.md,
+  },
+  formError: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.xs,
+    backgroundColor: Colors.errorSurface,
+    padding: Spacing.md,
+    borderRadius: Radius.md,
+    marginBottom: Spacing.md,
   },
   primaryBtn: {
     backgroundColor: Colors.primary,
     borderRadius: Radius.md,
     paddingVertical: Spacing.md,
     alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
     marginTop: Spacing.sm,
+    ...Shadow.md,
   },
   primaryBtnText: {
     color: "#fff",
     fontSize: FontSize.md,
     fontWeight: FontWeight.bold,
-  },
-
-  // Owner actions in card
-  ownerActions: {
-    flexDirection: "row",
-    gap: Spacing.sm,
-    marginLeft: "auto",
-  },
-  editBtn: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 6,
-    borderRadius: Radius.sm,
-    borderWidth: 1,
-    borderColor: Colors.primary,
-  },
-  editBtnText: {
-    color: Colors.primary,
-    fontSize: FontSize.xs,
-    fontWeight: FontWeight.bold,
-  },
-  deleteBtn: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 6,
-    borderRadius: Radius.sm,
-    borderWidth: 1,
-    borderColor: Colors.error,
-  },
-  deleteBtnText: {
-    color: Colors.error,
-    fontSize: FontSize.xs,
-    fontWeight: FontWeight.bold,
-  },
-
-  // Picker chips
-  categoryPicker: {
-    flexDirection: "row",
-    marginBottom: Spacing.md,
-  },
-  chip: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 8,
-    borderRadius: Radius.full,
-    backgroundColor: Colors.surfaceCard,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    marginRight: Spacing.xs,
-  },
-  chipActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
-  },
-  chipText: {
-    color: Colors.textSecondary,
-    fontSize: FontSize.xs,
-    fontWeight: FontWeight.semibold,
-  },
-  chipTextActive: {
-    color: "#fff",
   },
 
   // Empty state
