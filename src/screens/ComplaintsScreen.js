@@ -23,6 +23,7 @@ import {
   getCustomers,
   getMyBookings,
   getWorkers,
+  updateComplaint,
   updateComplaintStatus,
 } from "../services/apiClient";
 
@@ -53,6 +54,236 @@ const PRIORITIES = [
   { id: "urgent", label: "Urgent", color: "#B71C1C" },
 ];
 
+// --- Sub-components moved outside to prevent re-mounting ---
+
+const ComplaintForm = ({
+  user,
+  showForm,
+  setShowForm,
+  form,
+  updateForm,
+  setForm,
+  workers,
+  submitting,
+  submitComplaint,
+  actionError,
+  isEditMode,
+  resetForm,
+}) => {
+  if (!showForm) return null;
+
+  return (
+    <View style={styles.formContent}>
+      <View style={styles.divider} />
+
+      {form.workerName || form.jobTitle ? (
+        <View style={styles.targetBanner}>
+          <View style={styles.targetIconBox}>
+            <Ionicons name="warning" size={24} color={Colors.error} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.targetLabel}>REPORTING AGAINST</Text>
+            <Text style={styles.targetName}>{form.workerName || "Professional"}</Text>
+            {form.jobTitle && <Text style={styles.targetSub}>{form.jobTitle}</Text>}
+          </View>
+          <Pressable onPress={resetForm} style={styles.clearBtn}>
+            <Ionicons name="close-circle" size={24} color={Colors.textMuted} />
+          </Pressable>
+        </View>
+      ) : (
+        <View style={styles.fieldGroup}>
+          <Text style={SharedStyles.label}>
+            {user?.role === "worker" ? "Select Customer" : "Select Professional"}
+          </Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillScroll}>
+            {workers.map((w) => (
+              <Pressable
+                key={w._id}
+                style={[SharedStyles.pill, form.complainedAgainst === w._id && SharedStyles.pillActive]}
+                onPress={() => {
+                  updateForm("complainedAgainst", w._id);
+                  updateForm("workerName", `${w.firstName || ""} ${w.lastName || ""}`.trim());
+                }}
+              >
+                <Text style={[SharedStyles.pillText, form.complainedAgainst === w._id && SharedStyles.pillTextActive]}>
+                  {`${w.firstName || ""} ${w.lastName || ""}`.trim() || w._id.slice(-6)}
+                </Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+        </View>
+      )}
+
+      <View style={styles.fieldGroup}>
+        <Text style={SharedStyles.label}>Category</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillScroll}>
+          {CATEGORIES.map((cat) => (
+            <Pressable
+              key={cat.id}
+              style={[SharedStyles.pill, form.complaintCategory === cat.id && SharedStyles.pillActive]}
+              onPress={() => updateForm("complaintCategory", cat.id)}
+            >
+              <View style={styles.pillContent}>
+                <Ionicons
+                  name={cat.icon}
+                  size={14}
+                  color={form.complaintCategory === cat.id ? Colors.textOnPrimary : Colors.textSecondary}
+                  style={{ marginRight: 4 }}
+                />
+                <Text style={[SharedStyles.pillText, form.complaintCategory === cat.id && SharedStyles.pillTextActive]}>
+                  {cat.label}
+                </Text>
+              </View>
+            </Pressable>
+          ))}
+        </ScrollView>
+      </View>
+
+      <View style={styles.fieldGroup}>
+        <Text style={SharedStyles.label}>Priority</Text>
+        <View style={styles.priorityGrid}>
+          {PRIORITIES.map((p) => (
+            <Pressable
+              key={p.id}
+              style={[
+                SharedStyles.pill,
+                styles.priorityPill,
+                form.priority === p.id && { backgroundColor: p.color, borderColor: p.color }
+              ]}
+              onPress={() => updateForm("priority", p.id)}
+            >
+              <Text style={[SharedStyles.pillText, form.priority === p.id && { color: "#fff" }]}>
+                {p.label}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      </View>
+
+      <View style={styles.fieldGroup}>
+        <Text style={SharedStyles.label}>Summary</Text>
+        <ThemedInput
+          style={styles.input}
+          placeholder="e.g., Late arrival, missing tools..."
+          value={form.complaintTitle}
+          onChangeText={(v) => updateForm("complaintTitle", v)}
+        />
+      </View>
+
+      <View style={styles.fieldGroup}>
+        <Text style={SharedStyles.label}>Description</Text>
+        <ThemedInput
+          style={[styles.input, styles.textArea]}
+          placeholder="Tell us more about what happened..."
+          multiline
+          numberOfLines={4}
+          value={form.complaintDescription}
+          onChangeText={(v) => updateForm("complaintDescription", v)}
+        />
+      </View>
+
+      {actionError ? <Text style={styles.errorText}>{actionError}</Text> : null}
+
+      <Pressable
+        style={[SharedStyles.primaryButton, submitting && { opacity: 0.7 }]}
+        onPress={submitComplaint}
+        disabled={submitting}
+      >
+        {submitting ? (
+          <ActivityIndicator color={Colors.textOnPrimary} size="small" />
+        ) : (
+          <Text style={SharedStyles.primaryButtonText}>
+            {isEditMode ? "Update Report" : "Submit Report"}
+          </Text>
+        )}
+      </Pressable>
+    </View>
+  );
+};
+
+const ComplaintCard = ({ item, user, adminMode, handleDelete, handleEdit, handleStatusChange }) => {
+  const mine = !adminMode && (item.complainant?._id || item.complainant) === user?.id;
+  const priorityColor = PRIORITIES.find(p => p.id === item.priority)?.color || Colors.textMuted;
+
+  return (
+    <View style={[SharedStyles.card, styles.complaintCard]}>
+      <View style={[styles.priorityTag, { backgroundColor: priorityColor }]} />
+
+      <View style={styles.cardHeader}>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.itemTitle} numberOfLines={1}>{item.complaintTitle || "Complaint"}</Text>
+          <Text style={styles.categoryText}>
+            {CATEGORIES.find(c => c.id === item.complaintCategory)?.label || "Other"}
+          </Text>
+        </View>
+        <StatusBadge status={item.complaintStatus} />
+      </View>
+
+      <Text style={styles.itemDescription}>{item.complaintDescription}</Text>
+
+      <View style={styles.cardFooter}>
+        <View style={styles.metaRow}>
+          <View style={styles.metaItem}>
+            <Ionicons name="person-outline" size={14} color={Colors.textMuted} />
+            <Text style={styles.metaLabel}>By: </Text>
+            <Text style={styles.metaValue} numberOfLines={1}>
+              {item.complainant ? `${item.complainant.firstName || ""} ${item.complainant.lastName || ""}`.trim() : "You"}
+            </Text>
+          </View>
+          <View style={styles.metaItem}>
+            <Ionicons name="alert-circle-outline" size={14} color={Colors.error} />
+            <Text style={styles.metaLabel}>Against: </Text>
+            <Text style={styles.metaValue} numberOfLines={1}>
+              {item.complainedAgainst ? `${item.complainedAgainst.firstName || ""} ${item.complainedAgainst.lastName || ""}`.trim() : "N/A"}
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.dateRow}>
+          <Ionicons name="calendar-outline" size={14} color={Colors.textMuted} />
+          <Text style={styles.dateText}>{new Date(item.createdAt).toLocaleDateString()}</Text>
+        </View>
+      </View>
+
+      <View style={styles.cardActions}>
+        {mine && (
+          <View style={styles.mineActions}>
+            {item.complaintStatus === "pending" && (
+              <Pressable style={styles.actionBtn} onPress={() => handleEdit(item)}>
+                <Ionicons name="create-outline" size={16} color={Colors.primary} />
+                <Text style={[styles.actionBtnText, { color: Colors.primary }]}>Edit</Text>
+              </Pressable>
+            )}
+            <Pressable style={styles.actionBtn} onPress={() => handleDelete(item._id)}>
+              <Ionicons name="trash-outline" size={16} color={Colors.error} />
+              <Text style={[styles.actionBtnText, { color: Colors.error }]}>Withdraw</Text>
+            </Pressable>
+          </View>
+        )}
+
+        {adminMode && (item.complaintStatus === "pending" || item.complaintStatus === "investigating") && (
+          <View style={styles.adminActions}>
+            <Pressable
+              style={[styles.actionBtn, styles.resolveBtn]}
+              onPress={() => handleStatusChange(item._id, "resolved")}
+            >
+              <Ionicons name="checkmark-circle-outline" size={16} color={Colors.success} />
+              <Text style={[styles.actionBtnText, { color: Colors.success }]}>Resolve</Text>
+            </Pressable>
+            <Pressable
+              style={[styles.actionBtn, styles.rejectBtn]}
+              onPress={() => handleStatusChange(item._id, "rejected")}
+            >
+              <Ionicons name="close-circle-outline" size={16} color={Colors.error} />
+              <Text style={[styles.actionBtnText, { color: Colors.error }]}>Reject</Text>
+            </Pressable>
+          </View>
+        )}
+      </View>
+    </View>
+  );
+};
+
 export default function ComplaintsScreen() {
   const { token, user } = useAuth();
   const route = useRoute();
@@ -67,6 +298,8 @@ export default function ComplaintsScreen() {
   const [showForm, setShowForm] = useState(false);
 
   const [form, setForm] = useState(INITIAL_FORM);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editingId, setEditingId] = useState(null);
 
   const adminMode = user?.role === "admin";
 
@@ -116,6 +349,29 @@ export default function ComplaintsScreen() {
     setForm((prev) => ({ ...prev, [field]: value }));
   }
 
+  function resetForm() {
+    setForm(INITIAL_FORM);
+    setIsEditMode(false);
+    setEditingId(null);
+  }
+
+  function handleEdit(item) {
+    setForm({
+      complainedAgainst: item.complainedAgainst?._id || item.complainedAgainst,
+      workerName: item.complainedAgainst ? `${item.complainedAgainst.firstName || ""} ${item.complainedAgainst.lastName || ""}`.trim() : "",
+      booking: item.booking?._id || item.booking || "",
+      job: item.job?._id || item.job || "",
+      jobTitle: item.job?.title || "",
+      complaintCategory: item.complaintCategory,
+      complaintTitle: item.complaintTitle,
+      complaintDescription: item.complaintDescription,
+      priority: item.priority,
+    });
+    setIsEditMode(true);
+    setEditingId(item._id);
+    setShowForm(true);
+  }
+
   async function submitComplaint() {
     if (!form.complainedAgainst || !form.complaintTitle || !form.complaintDescription) {
       setActionError("Please fill all required fields");
@@ -125,12 +381,16 @@ export default function ComplaintsScreen() {
     try {
       setActionError("");
       setSubmitting(true);
-      await createComplaint(token, form);
-      setForm(INITIAL_FORM);
+      if (isEditMode) {
+        await updateComplaint(token, editingId, form);
+      } else {
+        await createComplaint(token, form);
+      }
+      resetForm();
       setShowForm(false);
       await loadData();
     } catch (e) {
-      setActionError(e.message || "Failed to create complaint");
+      setActionError(e.message || `Failed to ${isEditMode ? "update" : "create"} complaint`);
     } finally {
       setSubmitting(false);
     }
@@ -156,7 +416,18 @@ export default function ComplaintsScreen() {
     }
   }
 
-  const renderHeader = () => (
+  const renderItem = ({ item }) => (
+    <ComplaintCard
+      item={item}
+      user={user}
+      adminMode={adminMode}
+      handleDelete={handleDelete}
+      handleEdit={handleEdit}
+      handleStatusChange={handleStatusChange}
+    />
+  );
+
+  const header = (
     <View style={styles.header}>
       <View style={styles.headerTop}>
         <View>
@@ -194,131 +465,20 @@ export default function ComplaintsScreen() {
             />
           </Pressable>
 
-          {showForm && (
-            <View style={styles.formContent}>
-              <View style={styles.divider} />
-
-              {form.workerName || form.jobTitle ? (
-                <View style={styles.targetBanner}>
-                  <View style={styles.targetIconBox}>
-                    <Ionicons name="warning" size={24} color={Colors.error} />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.targetLabel}>REPORTING AGAINST</Text>
-                    <Text style={styles.targetName}>{form.workerName || "Professional"}</Text>
-                    {form.jobTitle && <Text style={styles.targetSub}>{form.jobTitle}</Text>}
-                  </View>
-                  <Pressable onPress={() => setForm(INITIAL_FORM)} style={styles.clearBtn}>
-                    <Ionicons name="close-circle" size={24} color={Colors.textMuted} />
-                  </Pressable>
-                </View>
-              ) : (
-                <View style={styles.fieldGroup}>
-                  <Text style={SharedStyles.label}>
-                    {user?.role === "worker" ? "Select Customer" : "Select Professional"}
-                  </Text>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillScroll}>
-                    {workers.map((w) => (
-                      <Pressable
-                        key={w._id}
-                        style={[SharedStyles.pill, form.complainedAgainst === w._id && SharedStyles.pillActive]}
-                        onPress={() => {
-                          updateForm("complainedAgainst", w._id);
-                          updateForm("workerName", `${w.firstName || ""} ${w.lastName || ""}`.trim());
-                        }}
-                      >
-                        <Text style={[SharedStyles.pillText, form.complainedAgainst === w._id && SharedStyles.pillTextActive]}>
-                          {`${w.firstName || ""} ${w.lastName || ""}`.trim() || w._id.slice(-6)}
-                        </Text>
-                      </Pressable>
-                    ))}
-                  </ScrollView>
-                </View>
-              )}
-
-              <View style={styles.fieldGroup}>
-                <Text style={SharedStyles.label}>Category</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillScroll}>
-                  {CATEGORIES.map((cat) => (
-                    <Pressable
-                      key={cat.id}
-                      style={[SharedStyles.pill, form.complaintCategory === cat.id && SharedStyles.pillActive]}
-                      onPress={() => updateForm("complaintCategory", cat.id)}
-                    >
-                      <View style={styles.pillContent}>
-                        <Ionicons
-                          name={cat.icon}
-                          size={14}
-                          color={form.complaintCategory === cat.id ? Colors.textOnPrimary : Colors.textSecondary}
-                          style={{ marginRight: 4 }}
-                        />
-                        <Text style={[SharedStyles.pillText, form.complaintCategory === cat.id && SharedStyles.pillTextActive]}>
-                          {cat.label}
-                        </Text>
-                      </View>
-                    </Pressable>
-                  ))}
-                </ScrollView>
-              </View>
-
-              <View style={styles.fieldGroup}>
-                <Text style={SharedStyles.label}>Priority</Text>
-                <View style={styles.priorityGrid}>
-                  {PRIORITIES.map((p) => (
-                    <Pressable
-                      key={p.id}
-                      style={[
-                        SharedStyles.pill,
-                        styles.priorityPill,
-                        form.priority === p.id && { backgroundColor: p.color, borderColor: p.color }
-                      ]}
-                      onPress={() => updateForm("priority", p.id)}
-                    >
-                      <Text style={[SharedStyles.pillText, form.priority === p.id && { color: "#fff" }]}>
-                        {p.label}
-                      </Text>
-                    </Pressable>
-                  ))}
-                </View>
-              </View>
-
-              <View style={styles.fieldGroup}>
-                <Text style={SharedStyles.label}>Summary</Text>
-                <ThemedInput
-                  style={styles.input}
-                  placeholder="e.g., Late arrival, missing tools..."
-                  value={form.complaintTitle}
-                  onChangeText={(v) => updateForm("complaintTitle", v)}
-                />
-              </View>
-
-              <View style={styles.fieldGroup}>
-                <Text style={SharedStyles.label}>Description</Text>
-                <ThemedInput
-                  style={[styles.input, styles.textArea]}
-                  placeholder="Tell us more about what happened..."
-                  multiline
-                  numberOfLines={4}
-                  value={form.complaintDescription}
-                  onChangeText={(v) => updateForm("complaintDescription", v)}
-                />
-              </View>
-
-              {actionError ? <Text style={styles.errorText}>{actionError}</Text> : null}
-
-              <Pressable
-                style={[SharedStyles.primaryButton, submitting && { opacity: 0.7 }]}
-                onPress={submitComplaint}
-                disabled={submitting}
-              >
-                {submitting ? (
-                  <ActivityIndicator color={Colors.textOnPrimary} size="small" />
-                ) : (
-                  <Text style={SharedStyles.primaryButtonText}>Submit Report</Text>
-                )}
-              </Pressable>
-            </View>
-          )}
+          <ComplaintForm
+            user={user}
+            showForm={showForm}
+            setShowForm={setShowForm}
+            form={form}
+            updateForm={updateForm}
+            setForm={setForm}
+            workers={workers}
+            submitting={submitting}
+            submitComplaint={submitComplaint}
+            actionError={actionError}
+            isEditMode={isEditMode}
+            resetForm={resetForm}
+          />
         </View>
       )}
 
@@ -328,88 +488,13 @@ export default function ComplaintsScreen() {
     </View>
   );
 
-  const renderComplaintCard = ({ item }) => {
-    const mine = !adminMode && (item.complainant?._id || item.complainant) === user?.id;
-    const priorityColor = PRIORITIES.find(p => p.id === item.priority)?.color || Colors.textMuted;
-
-    return (
-      <View style={[SharedStyles.card, styles.complaintCard]}>
-        <View style={[styles.priorityTag, { backgroundColor: priorityColor }]} />
-
-        <View style={styles.cardHeader}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.itemTitle} numberOfLines={1}>{item.complaintTitle || "Complaint"}</Text>
-            <Text style={styles.categoryText}>
-              {CATEGORIES.find(c => c.id === item.complaintCategory)?.label || "Other"}
-            </Text>
-          </View>
-          <StatusBadge status={item.complaintStatus} />
-        </View>
-
-        <Text style={styles.itemDescription}>{item.complaintDescription}</Text>
-
-        <View style={styles.cardFooter}>
-          <View style={styles.metaRow}>
-            <View style={styles.metaItem}>
-              <Ionicons name="person-outline" size={14} color={Colors.textMuted} />
-              <Text style={styles.metaLabel}>By: </Text>
-              <Text style={styles.metaValue} numberOfLines={1}>
-                {item.complainant ? `${item.complainant.firstName || ""} ${item.complainant.lastName || ""}`.trim() : "You"}
-              </Text>
-            </View>
-            <View style={styles.metaItem}>
-              <Ionicons name="alert-circle-outline" size={14} color={Colors.error} />
-              <Text style={styles.metaLabel}>Against: </Text>
-              <Text style={styles.metaValue} numberOfLines={1}>
-                {item.complainedAgainst ? `${item.complainedAgainst.firstName || ""} ${item.complainedAgainst.lastName || ""}`.trim() : "N/A"}
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.dateRow}>
-            <Ionicons name="calendar-outline" size={14} color={Colors.textMuted} />
-            <Text style={styles.dateText}>{new Date(item.createdAt).toLocaleDateString()}</Text>
-          </View>
-        </View>
-
-        <View style={styles.cardActions}>
-          {mine && (
-            <Pressable style={styles.actionBtn} onPress={() => handleDelete(item._id)}>
-              <Ionicons name="trash-outline" size={16} color={Colors.error} />
-              <Text style={[styles.actionBtnText, { color: Colors.error }]}>Withdraw</Text>
-            </Pressable>
-          )}
-
-          {adminMode && (item.complaintStatus === "pending" || item.complaintStatus === "investigating") && (
-            <View style={styles.adminActions}>
-              <Pressable
-                style={[styles.actionBtn, styles.resolveBtn]}
-                onPress={() => handleStatusChange(item._id, "resolved")}
-              >
-                <Ionicons name="checkmark-circle-outline" size={16} color={Colors.success} />
-                <Text style={[styles.actionBtnText, { color: Colors.success }]}>Resolve</Text>
-              </Pressable>
-              <Pressable
-                style={[styles.actionBtn, styles.rejectBtn]}
-                onPress={() => handleStatusChange(item._id, "rejected")}
-              >
-                <Ionicons name="close-circle-outline" size={16} color={Colors.error} />
-                <Text style={[styles.actionBtnText, { color: Colors.error }]}>Reject</Text>
-              </Pressable>
-            </View>
-          )}
-        </View>
-      </View>
-    );
-  };
-
   return (
     <SafeAreaView style={SharedStyles.safeArea}>
       <FlatList
         data={complaints}
         keyExtractor={(item) => item._id}
-        renderItem={renderComplaintCard}
-        ListHeaderComponent={renderHeader}
+        renderItem={renderItem}
+        ListHeaderComponent={header}
         contentContainerStyle={styles.listContainer}
         refreshControl={
           <RefreshControl
@@ -498,6 +583,7 @@ const styles = StyleSheet.create({
   dateText: { fontSize: FontSize.xs, color: Colors.textMuted, marginLeft: 4 },
 
   cardActions: { marginTop: Spacing.md },
+  mineActions: { flexDirection: "row", gap: Spacing.sm },
   adminActions: { flexDirection: "row", gap: Spacing.sm },
   actionBtn: {
     flexDirection: "row", alignItems: "center", justifyContent: "center",

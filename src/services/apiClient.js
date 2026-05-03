@@ -301,6 +301,20 @@ export async function createComplaint(token, payload) {
   return response.data;
 }
 
+export async function updateComplaint(token, complaintId, payload) {
+  const response = await request(`/complaints/${complaintId}`, {
+    method: "PUT",
+    token,
+    body: {
+      complaintCategory: payload.complaintCategory,
+      complaintTitle: payload.complaintTitle,
+      complaintDescription: payload.complaintDescription,
+      priority: payload.priority,
+    },
+  });
+  return response.data;
+}
+
 export async function updateComplaintStatus(token, complaintId, status, resolutionNotes = "") {
   const response = await request(`/complaints/${complaintId}/status`, {
     method: "PATCH",

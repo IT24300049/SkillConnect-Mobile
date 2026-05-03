@@ -77,10 +77,12 @@ router.get('/my', auth, async (req, res) => {
 // POST /api/complaints — submit complaint
 router.post('/', auth, async (req, res) => {
     try {
-        if (!req.body.complainedAgainst || !req.body.description) {
+        const { complainedAgainst, complaintCategory, complaintTitle, complaintDescription } = req.body;
+
+        if (!complainedAgainst || !complaintCategory || !complaintTitle || !complaintDescription) {
             return res.status(400).json({ 
                 status: 'error', 
-                message: 'complainedAgainst and description are required' 
+                message: 'complainedAgainst, category, title, and description are required' 
             });
         }
 
@@ -121,7 +123,42 @@ router.patch('/:id/status', auth, async (req, res) => {
         
         res.json({ status: 'success', data: complaint });
     } catch (error) {
-        res.status(500).json({ status: 'error', message: 'Failed to update complaint' });
+        res.status(500).json({ status: 'error', message: 'Failed to update complaint status' });
+    }
+});
+
+// PUT /api/complaints/:id — update complaint details (complainant only, if pending)
+router.put('/:id', auth, async (req, res) => {
+    try {
+        const { complaintCategory, complaintTitle, complaintDescription, priority } = req.body;
+
+        const complaint = await Complaint.findOne({ 
+            _id: req.params.id, 
+            complainant: req.userId 
+        });
+
+        if (!complaint) {
+            return res.status(404).json({ status: 'error', message: 'Complaint not found or not authorized' });
+        }
+
+        // Only allow editing if status is pending
+        if (complaint.complaintStatus !== 'pending') {
+            return res.status(400).json({ 
+                status: 'error', 
+                message: 'Complaints can only be edited while they are still pending' 
+            });
+        }
+
+        // Update fields
+        if (complaintCategory) complaint.complaintCategory = complaintCategory;
+        if (complaintTitle) complaint.complaintTitle = complaintTitle;
+        if (complaintDescription) complaint.complaintDescription = complaintDescription;
+        if (priority) complaint.priority = priority;
+
+        await complaint.save();
+        res.json({ status: 'success', data: complaint });
+    } catch (error) {
+        res.status(500).json({ status: 'error', message: 'Failed to update complaint details' });
     }
 });
 
