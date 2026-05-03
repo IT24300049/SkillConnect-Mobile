@@ -203,142 +203,6 @@ export default function ReviewsScreen() {
     }
   }
 
-  const renderHeader = () => (
-    <View style={styles.header}>
-      <View style={styles.headerTop}>
-        <View>
-          <Text style={SharedStyles.screenTitle}>Reviews</Text>
-          <Text style={SharedStyles.screenSubtitle}>Your professional feedback history</Text>
-        </View>
-        <Pressable
-          style={({ pressed }) => [styles.refreshBtn, pressed && { opacity: 0.7 }]}
-          onPress={() => { setRefreshing(true); loadData(); }}
-        >
-          <Ionicons name="refresh" size={20} color={Colors.textPrimary} />
-        </Pressable>
-      </View>
-
-      {user?.role !== "admin" && (
-        <View style={[SharedStyles.card, styles.formCard]}>
-          <Pressable
-            style={styles.formHeader}
-            onPress={() => setShowForm(!showForm)}
-          >
-            <View style={styles.formTitleRow}>
-              <Ionicons
-                name={editingId ? "create-outline" : "star-outline"}
-                size={22}
-                color={Colors.primary}
-              />
-              <Text style={styles.formTitle}>{editingId ? "Edit Your Review" : "Write a Review"}</Text>
-            </View>
-            <Ionicons
-              name={showForm ? "chevron-up" : "chevron-down"}
-              size={20}
-              color={Colors.textMuted}
-            />
-          </Pressable>
-
-          {showForm && (
-            <View style={styles.formContent}>
-              <View style={styles.divider} />
-
-              {form.revieweeName || form.jobTitle ? (
-                <View style={styles.targetBanner}>
-                  <View style={styles.targetIconBox}>
-                    <Ionicons name="person-circle" size={32} color={Colors.primary} />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.targetLabel}>YOU ARE REVIEWING</Text>
-                    <Text style={styles.targetName}>{form.revieweeName || "Professional"}</Text>
-                    {form.jobTitle && <Text style={styles.targetSub}>{form.jobTitle}</Text>}
-                  </View>
-                  {!editingId && (
-                    <Pressable onPress={() => setForm(INITIAL_FORM)} style={styles.clearBtn}>
-                      <Ionicons name="close-circle" size={24} color={Colors.textMuted} />
-                    </Pressable>
-                  )}
-                </View>
-              ) : (
-                <View style={styles.fieldGroup}>
-                  <Text style={SharedStyles.label}>Select Recent Booking</Text>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillScroll}>
-                    {bookings.length > 0 ? (
-                      bookings.slice(0, 12).map((booking) => (
-                        <Pressable
-                          key={booking._id}
-                          style={[SharedStyles.pill, form.booking === booking._id && SharedStyles.pillActive]}
-                          onPress={() => useBooking(booking)}
-                        >
-                          <Text style={[SharedStyles.pillText, form.booking === booking._id && SharedStyles.pillTextActive]}>
-                            {booking.job?.jobTitle || "Job"} • {new Date(booking.scheduledDate || booking.createdAt).toLocaleDateString()}
-                          </Text>
-                        </Pressable>
-                      ))
-                    ) : (
-                      <Text style={styles.emptySmall}>No recent bookings to review</Text>
-                    )}
-                  </ScrollView>
-                </View>
-              )}
-
-              <View style={styles.fieldGroup}>
-                <Text style={SharedStyles.label}>Overall Rating</Text>
-                <View style={styles.starsWrapper}>
-                  <StarRating
-                    rating={form.rating}
-                    onRatingChange={(r) => updateForm("rating", r)}
-                  />
-                  <Text style={styles.ratingText}>{form.rating}/5 Stars</Text>
-                </View>
-              </View>
-
-              <View style={styles.fieldGroup}>
-                <Text style={SharedStyles.label}>Your Message</Text>
-                <ThemedInput
-                  style={[styles.input, styles.textArea]}
-                  placeholder="Tell others about your experience..."
-                  multiline
-                  numberOfLines={4}
-                  value={form.reviewText}
-                  onChangeText={(value) => updateForm("reviewText", value)}
-                />
-              </View>
-
-              {actionError ? <Text style={styles.errorText}>{actionError}</Text> : null}
-
-              <View style={styles.formActions}>
-                <Pressable
-                  style={[SharedStyles.primaryButton, styles.submitBtn, submitting && { opacity: 0.7 }]}
-                  onPress={submitReview}
-                  disabled={submitting}
-                >
-                  {submitting ? (
-                    <ActivityIndicator color={Colors.textOnPrimary} size="small" />
-                  ) : (
-                    <Text style={SharedStyles.primaryButtonText}>
-                      {editingId ? "Save Changes" : "Post Review"}
-                    </Text>
-                  )}
-                </Pressable>
-
-                {editingId && (
-                  <Pressable style={styles.cancelBtn} onPress={resetForm}>
-                    <Text style={styles.cancelBtnText}>Cancel</Text>
-                  </Pressable>
-                )}
-              </View>
-            </View>
-          )}
-        </View>
-      )}
-
-      {reviews.length > 0 && (
-        <Text style={[SharedStyles.sectionTitle, { marginTop: Spacing.lg }]}>Recent Activity</Text>
-      )}
-    </View>
-  );
-
   const renderReviewCard = ({ item }) => {
     const isMine = (item.reviewer?._id || item.reviewer) === user?.userId;
 
@@ -390,7 +254,141 @@ export default function ReviewsScreen() {
         data={reviews}
         keyExtractor={(item) => item._id}
         renderItem={renderReviewCard}
-        ListHeaderComponent={renderHeader}
+        ListHeaderComponent={
+          <View style={styles.header}>
+            <View style={styles.headerTop}>
+              <View>
+                <Text style={SharedStyles.screenTitle}>Reviews</Text>
+                <Text style={SharedStyles.screenSubtitle}>Your professional feedback history</Text>
+              </View>
+              <Pressable
+                style={({ pressed }) => [styles.refreshBtn, pressed && { opacity: 0.7 }]}
+                onPress={() => { setRefreshing(true); loadData(); }}
+              >
+                <Ionicons name="refresh" size={20} color={Colors.textPrimary} />
+              </Pressable>
+            </View>
+
+            {user?.role !== "admin" && (
+              <View style={[SharedStyles.card, styles.formCard]}>
+                <Pressable
+                  style={styles.formHeader}
+                  onPress={() => setShowForm(!showForm)}
+                >
+                  <View style={styles.formTitleRow}>
+                    <Ionicons
+                      name={editingId ? "create-outline" : "star-outline"}
+                      size={22}
+                      color={Colors.primary}
+                    />
+                    <Text style={styles.formTitle}>{editingId ? "Edit Your Review" : "Write a Review"}</Text>
+                  </View>
+                  <Ionicons
+                    name={showForm ? "chevron-up" : "chevron-down"}
+                    size={20}
+                    color={Colors.textMuted}
+                  />
+                </Pressable>
+
+                {showForm && (
+                  <View style={styles.formContent}>
+                    <View style={styles.divider} />
+
+                    {form.revieweeName || form.jobTitle ? (
+                      <View style={styles.targetBanner}>
+                        <View style={styles.targetIconBox}>
+                          <Ionicons name="person-circle" size={32} color={Colors.primary} />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.targetLabel}>YOU ARE REVIEWING</Text>
+                          <Text style={styles.targetName}>{form.revieweeName || "Professional"}</Text>
+                          {form.jobTitle && <Text style={styles.targetSub}>{form.jobTitle}</Text>}
+                        </View>
+                        {!editingId && (
+                          <Pressable onPress={() => setForm(INITIAL_FORM)} style={styles.clearBtn}>
+                            <Ionicons name="close-circle" size={24} color={Colors.textMuted} />
+                          </Pressable>
+                        )}
+                      </View>
+                    ) : (
+                      <View style={styles.fieldGroup}>
+                        <Text style={SharedStyles.label}>Select Recent Booking</Text>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillScroll}>
+                          {bookings.length > 0 ? (
+                            bookings.slice(0, 12).map((booking) => (
+                              <Pressable
+                                key={booking._id}
+                                style={[SharedStyles.pill, form.booking === booking._id && SharedStyles.pillActive]}
+                                onPress={() => useBooking(booking)}
+                              >
+                                <Text style={[SharedStyles.pillText, form.booking === booking._id && SharedStyles.pillTextActive]}>
+                                  {booking.job?.jobTitle || "Job"} • {new Date(booking.scheduledDate || booking.createdAt).toLocaleDateString()}
+                                </Text>
+                              </Pressable>
+                            ))
+                          ) : (
+                            <Text style={styles.emptySmall}>No recent bookings to review</Text>
+                          )}
+                        </ScrollView>
+                      </View>
+                    )}
+
+                    <View style={styles.fieldGroup}>
+                      <Text style={SharedStyles.label}>Overall Rating</Text>
+                      <View style={styles.starsWrapper}>
+                        <StarRating
+                          rating={form.rating}
+                          onRatingChange={(r) => updateForm("rating", r)}
+                        />
+                        <Text style={styles.ratingText}>{form.rating}/5 Stars</Text>
+                      </View>
+                    </View>
+
+                    <View style={styles.fieldGroup}>
+                      <Text style={SharedStyles.label}>Your Message</Text>
+                      <ThemedInput
+                        style={[styles.input, styles.textArea]}
+                        placeholder="Tell others about your experience..."
+                        multiline
+                        numberOfLines={4}
+                        value={form.reviewText}
+                        onChangeText={(value) => updateForm("reviewText", value)}
+                      />
+                    </View>
+
+                    {actionError ? <Text style={styles.errorText}>{actionError}</Text> : null}
+
+                    <View style={styles.formActions}>
+                      <Pressable
+                        style={[SharedStyles.primaryButton, styles.submitBtn, submitting && { opacity: 0.7 }]}
+                        onPress={submitReview}
+                        disabled={submitting}
+                      >
+                        {submitting ? (
+                          <ActivityIndicator color={Colors.textOnPrimary} size="small" />
+                        ) : (
+                          <Text style={SharedStyles.primaryButtonText}>
+                            {editingId ? "Save Changes" : "Post Review"}
+                          </Text>
+                        )}
+                      </Pressable>
+
+                      {editingId && (
+                        <Pressable style={styles.cancelBtn} onPress={resetForm}>
+                          <Text style={styles.cancelBtnText}>Cancel</Text>
+                        </Pressable>
+                      )}
+                    </View>
+                  </View>
+                )}
+              </View>
+            )}
+
+            {reviews.length > 0 && (
+              <Text style={[SharedStyles.sectionTitle, { marginTop: Spacing.lg }]}>Recent Activity</Text>
+            )}
+          </View>
+        }
         contentContainerStyle={styles.listContainer}
         refreshControl={
           <RefreshControl

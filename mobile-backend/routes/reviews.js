@@ -113,17 +113,21 @@ router.put('/:id', auth, async (req, res) => {
         });
         if (!review) return res.status(404).json({ status: 'error', message: 'Review not found or not authorized' });
 
-        // Only allow updating certain fields
-        if (req.body.rating) {
-            if (req.body.rating < 1 || req.body.rating > 5) {
+        // Support both 'rating' and 'overallRating' for backward compatibility
+        const newRating = req.body.overallRating || req.body.rating;
+        if (newRating) {
+            if (newRating < 1 || newRating > 5) {
                 return res.status(400).json({ 
                     status: 'error', 
                     message: 'Rating must be between 1 and 5' 
                 });
             }
-            review.rating = req.body.rating;
+            review.overallRating = newRating;
         }
-        if (req.body.comment) review.comment = req.body.comment;
+
+        // Support both 'comment' and 'reviewText'
+        const newMessage = req.body.reviewText || req.body.comment;
+        if (newMessage) review.reviewText = newMessage;
 
         await review.save();
         res.json({ status: 'success', data: review });

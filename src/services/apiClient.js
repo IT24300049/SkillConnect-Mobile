@@ -349,8 +349,8 @@ export async function updateReview(token, reviewId, payload) {
     method: "PUT",
     token,
     body: {
-      rating: payload.rating,
-      comment: payload.reviewText,
+      overallRating: payload.rating,
+      reviewText: payload.reviewText,
     },
   });
   return response.data;

@@ -2,6 +2,8 @@ const { body, validationResult } = require('express-validator');
 
 // Validation schemas
 const authValidation = {
+    // ─── Registration Validation ───
+    // Applied when any new user (Customer, Worker, or Supplier) signs up.
     register: [
         body('email')
             .isEmail()
@@ -31,6 +33,11 @@ const authValidation = {
             .isIn(['customer', 'worker', 'supplier', 'admin'])
             .withMessage('Invalid role')
     ],
+
+    // ─── Profile Update Validation ───
+    // Applied when a user updates their profile in the dashboard.
+    // - Customers: Usually update Name, Phone, and Location.
+    // - Workers: Additionally update Bio, Skills, Hourly Rate, and Experience.
     profile: [
         body('firstName')
             .optional()
@@ -42,11 +49,15 @@ const authValidation = {
             .trim()
             .matches(/^\d{10}$/)
             .withMessage('Phone must be exactly 10 digits'),
+        // 'hourlyRate' is primarily for Workers; optional({ checkFalsy: true }) 
+        // ensures that Customers (who send an empty string) don't trigger an error.
         body('hourlyRate')
             .optional({ checkFalsy: true })
             .isNumeric()
             .withMessage('Hourly rate must be a number'),
     ],
+
+    // ─── Login Validation ───
     login: [
         body('email')
             .isEmail()
@@ -56,6 +67,9 @@ const authValidation = {
             .notEmpty()
             .withMessage('Password is required')
     ],
+
+    // ─── Job Posting Validation ───
+    // Applied when a Customer creates or edits a Job request.
     job: [
         body('jobTitle').notEmpty().withMessage('Job title is required'),
         body('category').notEmpty().withMessage('Category is required'),
@@ -63,6 +77,7 @@ const authValidation = {
         body('budgetMin').optional().isNumeric().withMessage('Min budget must be a number'),
         body('budgetMax').optional().isNumeric().withMessage('Max budget must be a number')
             .custom((value, { req }) => {
+                // Business logic: Max budget must always be higher than min budget
                 if (value && req.body.budgetMin && Number(value) <= Number(req.body.budgetMin)) {
                     throw new Error('Maximum budget must be greater than minimum budget');
                 }
@@ -71,7 +86,7 @@ const authValidation = {
     ]
 };
 
-// Validation middleware
+// Validation middleware: Final check before hitting the controller
 const validate = (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -87,7 +102,11 @@ const validate = (req, res, next) => {
     next();
 };
 
-// Sanitization helpers
+// ─── Sanitization Helpers ───
+// These functions strip out any fields not explicitly allowed.
+// This prevents "Mass Assignment" attacks where a user might try to 
+// elevate their own role (e.g., trying to change role to 'admin' via profile update).
+
 const sanitizeJobData = (data) => {
     const allowed = ['jobTitle', 'jobDescription', 'category', 'locationAddress', 'city', 'district',
                      'urgencyLevel', 'budgetMin', 'budgetMax', 'estimatedDurationHours', 'preferredStartDate'];
@@ -108,6 +127,7 @@ const sanitizeBookingData = (data) => {
 };
 
 const sanitizeProfileData = (data) => {
+    // Fields like 'role' or 'isVerified' are EXCLUDED here so users cannot change them.
     const allowed = ['firstName', 'lastName', 'phone', 'district', 'city', 'skills', 'bio', 'hourlyRate', 'experience', 'companyName'];
     const sanitized = {};
     allowed.forEach(field => {
